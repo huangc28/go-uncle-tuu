@@ -1,12 +1,12 @@
 package app
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
 	"huangc28/ios-inapp-trade/db"
+	"huangc28/ios-inapp-trade/internal/apperrors"
 	"huangc28/ios-inapp-trade/internal/pkg/requestbinder"
 )
 
@@ -28,19 +28,40 @@ func CollectProductInfoHandler(c *gin.Context) {
 
 	// bind request handler
 	if err := requestbinder.Bind(c, &body); err != nil {
-		c.JSON(http.StatusInternalServerError, ErrorMessage{
-			Err: err.Error(),
-		})
+		c.JSON(
+			http.StatusBadRequest,
+			apperrors.NewErr(
+				apperrors.FailedToBindAPIBody,
+				err.Error(),
+			),
+		)
 
 		return
 	}
 
-	log.Printf("DEBUG body %v", body)
-
 	// Store those information to DB.
-
 	prodInfoDao := NewProdInfoDAO(db.GetDB())
-	prodInfo, err := prodInfoDao.CreateProdInfoIfNotExists(
+	exists, err := prodInfoDao.IsProdInfoExists(body.ProdID, body.BundleID)
+
+	if err != nil {
+		c.JSON(
+			http.StatusInternalServerError,
+			apperrors.NewErr(apperrors.FailedToCheckProductExists, err.Error()),
+		)
+
+		return
+	}
+
+	if exists {
+		c.JSON(
+			http.StatusInternalServerError,
+			apperrors.NewErr(apperrors.DuplicatedProductInfo),
+		)
+
+		return
+	}
+
+	prodInfo, err := prodInfoDao.CreateProdInfo(
 		CreateProdInfoParams{
 			BundleID: body.BundleID,
 			ProdID:   body.ProdID,
@@ -51,17 +72,16 @@ func CollectProductInfoHandler(c *gin.Context) {
 	)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, ErrorMessage{
-			Err: err.Error(),
-		})
+		c.JSON(
+			http.StatusInternalServerError,
+			apperrors.NewErr(
+				apperrors.FailedToCreateProdInfo,
+				err.Error(),
+			),
+		)
 
 		return
 	}
 
-	log.Printf("DEBUG product info %v", prodInfo)
-
-	c.JSON(http.StatusOK, struct {
-		OK bool
-	}{true})
-
+	c.JSON(http.StatusOK, prodInfo)
 }

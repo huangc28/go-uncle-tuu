@@ -3,7 +3,6 @@ package app
 import (
 	"huangc28/ios-inapp-trade/db"
 	"huangc28/ios-inapp-trade/internal/models"
-	"log"
 )
 
 type ProdInfoDAO struct {
@@ -24,21 +23,25 @@ func NewProdInfoDAO(conn db.Conn) *ProdInfoDAO {
 	}
 }
 
-func (dao *ProdInfoDAO) IsProdInfoExists(prodName, bundleID string) {
+func (dao *ProdInfoDAO) IsProdInfoExists(prodID, bundleID string) (bool, error) {
 	query := `
-EXISTS (
+SELECT EXISTS (
 	SELECT COUNT(id)
 	FROM product_info
-	WHERE prod_name = $1
+	WHERE prod_id = $1
 	AND game_bundle_id = $2
 );
 	`
+	var exists bool
 
-	log.Printf("DEBUG %v", query)
+	if err := dao.conn.QueryRowx(query, prodID, bundleID).Scan(&exists); err != nil {
+		return exists, err
+	}
 
+	return exists, nil
 }
 
-func (dao *ProdInfoDAO) CreateProdInfoIfNotExists(params CreateProdInfoParams) (*models.ProductInfo, error) {
+func (dao *ProdInfoDAO) CreateProdInfo(params CreateProdInfoParams) (*models.ProductInfo, error) {
 	query := `
 INSERT INTO product_info (
 	prod_id,
