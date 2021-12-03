@@ -26,7 +26,7 @@ func NewProdInfoDAO(conn db.Conn) *ProdInfoDAO {
 func (dao *ProdInfoDAO) IsProdInfoExists(prodID, bundleID string) (bool, error) {
 	query := `
 SELECT EXISTS (
-	SELECT COUNT(id)
+	SELECT 1
 	FROM product_info
 	WHERE prod_id = $1
 	AND game_bundle_id = $2
@@ -71,4 +71,41 @@ RETURNING
 	}
 
 	return &m, nil
+}
+
+func (dao *ProdInfoDAO) fetchInventoryByBundleID(bundleID string) ([]*models.InventoryInfo, error) {
+	query := `
+SELECT
+	product_info.prod_id,
+	product_info.prod_name,
+	product_info.price,
+	COUNT(inventory.prod_id) AS quantity
+FROM
+	product_info
+LEFT JOIN inventory ON inventory.prod_id = product_info.id
+WHERE product_info.game_bundle_id = $1
+GROUP BY
+	product_info.prod_id,
+	product_info.prod_name,
+	product_info.price
+`
+
+	ms := make([]*models.InventoryInfo, 0)
+
+	rows, err := dao.conn.Queryx(query, bundleID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var m models.InventoryInfo
+		if err := rows.StructScan(&m); err != nil {
+			return nil, err
+		}
+
+		ms = append(ms, &m)
+	}
+
+	return ms, nil
 }

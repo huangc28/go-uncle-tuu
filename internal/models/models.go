@@ -6,3 +6,10 @@ type ProductInfo struct {
 	Price        float64 `json:"price"`
 	GameBundleID string  `json:"game_bundle_id"`
 }
+
+type InventoryInfo struct {
+	ProdID   string  `json:"prod_id"`
+	ProdName string  `json:"prod_name"`
+	Price    float64 `json:"price"`
+	Quantity int     `json:"quantity"`
+}

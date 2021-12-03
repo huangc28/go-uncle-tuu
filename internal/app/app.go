@@ -14,4 +14,9 @@ func StartApp(e *gin.Engine) {
 		"/collect-product-info",
 		CollectProductInfoHandler,
 	)
+
+	rv1.GET(
+		"/inventory",
+		fetchInventoryHandler,
+	)
 }

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -41,6 +42,8 @@ func CollectProductInfoHandler(c *gin.Context) {
 
 	// Store those information to DB.
 	prodInfoDao := NewProdInfoDAO(db.GetDB())
+
+	log.Printf("DEBUG %v %v", body.ProdID, body.BundleID)
 	exists, err := prodInfoDao.IsProdInfoExists(body.ProdID, body.BundleID)
 
 	if err != nil {
@@ -84,4 +87,42 @@ func CollectProductInfoHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, prodInfo)
+}
+
+type FetchInventoryBody struct {
+	BundleID string `form:"bundle_id" binding:"required"`
+}
+
+func fetchInventoryHandler(c *gin.Context) {
+	body := FetchInventoryBody{}
+
+	if err := requestbinder.Bind(c, &body); err != nil {
+		c.JSON(
+			http.StatusInternalServerError,
+			apperrors.NewErr(
+				apperrors.FailedToBindAPIBody,
+				err.Error(),
+			),
+		)
+
+		return
+	}
+
+	// Retrieve inventory status according given bundle_id
+	dao := NewProdInfoDAO(db.GetDB())
+	ms, err := dao.fetchInventoryByBundleID(body.BundleID)
+
+	if err != nil {
+		c.JSON(
+			http.StatusInternalServerError,
+			apperrors.NewErr(
+				apperrors.FailedToFetchInventoryInfo,
+				err.Error(),
+			),
+		)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, TrfInventory(ms))
 }
