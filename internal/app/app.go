@@ -12,11 +12,16 @@ func StartApp(e *gin.Engine) {
 
 	rv1.POST(
 		"/collect-product-info",
-		CollectProductInfoHandler,
+		collectProductInfoHandler,
 	)
 
 	rv1.GET(
 		"/inventory",
 		fetchInventoryHandler,
+	)
+
+	rv1.POST(
+		"/add-item-to-inventory",
+		addItemToInventory,
 	)
 }

@@ -3,6 +3,7 @@ package app
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -24,7 +25,7 @@ type ErrorMessage struct {
 	Err string `json:"error"`
 }
 
-func CollectProductInfoHandler(c *gin.Context) {
+func collectProductInfoHandler(c *gin.Context) {
 	body := CollectProductInfoBody{}
 
 	// bind request handler
@@ -125,4 +126,51 @@ func fetchInventoryHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, TrfInventory(ms))
+}
+
+type AddItemToInventoryBody struct {
+	// ProdName example: "arktw_diamond_1".
+	ProdID string `form:"prod_id" binding:"required"`
+
+	// Receipt receipt string after successful transaction.
+	Receipt         string    `form:"receipt" binding:"required"`
+	TransactionID   string    `form:"transaction_id" binding:"required"`
+	TransactionDate time.Time `form:"transaction_date" binding:"required"`
+}
+
+func addItemToInventory(c *gin.Context) {
+	body := AddItemToInventoryBody{}
+
+	if err := requestbinder.Bind(c, &body); err != nil {
+		c.JSON(
+			http.StatusBadRequest,
+			apperrors.NewErr(
+				apperrors.FailedToBindAPIBody,
+				err.Error(),
+			),
+		)
+
+		return
+	}
+
+	// Add game item to inventory.
+	dao := NewInventoryDAO(db.GetDB())
+	if err := dao.AddItemToInventory(GameItem{
+		ProdID:          body.ProdID,
+		Receipt:         body.Receipt,
+		TransactionID:   body.TransactionID,
+		TransactionDate: body.TransactionDate,
+	}); err != nil {
+		c.JSON(
+			http.StatusInternalServerError,
+			apperrors.NewErr(
+				apperrors.FailedToAddItemToInventory,
+				err.Error(),
+			),
+		)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, struct{}{})
 }

@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type ProductInfo struct {
 	ProdName     string  `json:"prod_name"`
 	ProdDesc     string  `json:"prod_desc"`
@@ -12,4 +14,11 @@ type InventoryInfo struct {
 	ProdName string  `json:"prod_name"`
 	Price    float64 `json:"price"`
 	Quantity int     `json:"quantity"`
+}
+
+type InventoryProduct struct {
+	ProdID          string    `json:prod_id`
+	TransactionID   string    `json:"transaction_id"`
+	Receipt         string    `json:"receipt"`
+	TransactionTime time.Time `json:"transaction_time"`
 }

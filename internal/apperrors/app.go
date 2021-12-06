@@ -6,6 +6,7 @@ const (
 	FailedToBindAPIBody        = "1000003"
 	FailedToCreateProdInfo     = "1000004"
 	FailedToFetchInventoryInfo = "1000006"
+	FailedToAddItemToInventory = "1000007"
 )
 
 var appErrMap = map[string]string{
