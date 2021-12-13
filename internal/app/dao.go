@@ -79,11 +79,12 @@ SELECT
 	product_info.prod_id,
 	product_info.prod_name,
 	product_info.price,
-	COUNT(inventory.prod_id) AS quantity
+	COUNT(CASE WHEN inventory.available THEN 1 END) AS quantity
 FROM
 	product_info
 LEFT JOIN inventory ON inventory.prod_id = product_info.id
-WHERE product_info.game_bundle_id = $1
+WHERE
+	product_info.game_bundle_id = $1
 GROUP BY
 	product_info.prod_id,
 	product_info.prod_name,
