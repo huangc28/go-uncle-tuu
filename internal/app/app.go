@@ -24,4 +24,6 @@ func StartApp(e *gin.Engine) {
 		"/add-item-to-inventory",
 		addItemToInventory,
 	)
+
+	rv1.GET("/stock", GetAvailableStock)
 }

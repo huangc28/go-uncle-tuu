@@ -3,7 +3,6 @@ package app
 import (
 	"huangc28/ios-inapp-trade/db"
 	"huangc28/ios-inapp-trade/internal/models"
-	"log"
 	"time"
 )
 
@@ -48,20 +47,15 @@ INSERT INTO inventory (
 func (dao *InventoryDAO) GetAvailableStock(prodID string) (*models.InventoryProduct, error) {
 	rowLockQuery := `
 SELECT
-	inventory.*
+	*
 FROM
 	inventory
-INNER JOIN product_info ON inventory.prod_id = product_info.id
 WHERE
-	available=true
-AND
-	product_info.prod_id = $1
-ORDER BY created_at ASC LIMIT 1 FOR UPDATE OF inventory;
-
+	available=true ORDER BY created_at ASC LIMIT 1 FOR UPDATE;
 `
 	m := models.InventoryProduct{}
 
-	if err := dao.conn.QueryRowx(rowLockQuery, prodID).StructScan(&m); err != nil {
+	if err := dao.conn.QueryRowx(rowLockQuery).StructScan(&m); err != nil {
 		return &m, err
 	}
 
@@ -77,11 +71,9 @@ SET available = false
 WHERE inventory.id = $1
 RETURNING *;
 `
-	if err := dao.conn.QueryRowx(updateAvailabilityQuery, m.ID).StructScan(&m); err != nil {
+	if err := dao.conn.QueryRowx(updateAvailabilityQuery).StructScan(&m); err != nil {
 		return nil, err
 	}
-
-	log.Printf("avai stock %v", m)
 
 	return &m, nil
 }

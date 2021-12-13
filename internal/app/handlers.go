@@ -1,6 +1,7 @@
 package app
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"time"
@@ -130,12 +131,12 @@ func fetchInventoryHandler(c *gin.Context) {
 
 type AddItemToInventoryBody struct {
 	// ProdName example: "arktw_diamond_1".
-	ProdID string `form:"prod_id" binding:"required"`
+	ProdID string `json:"prod_id" form:"prod_id" binding:"required"`
 
 	// Receipt receipt string after successful transaction.
-	Receipt         string    `form:"receipt" binding:"required"`
-	TransactionID   string    `form:"transaction_id" binding:"required"`
-	TransactionDate time.Time `form:"transaction_date" binding:"required"`
+	Receipt         string    `json:"receipt" form:"receipt" binding:"required"`
+	TransactionID   string    `json:"transaction_id" form:"transaction_id" binding:"required"`
+	TransactionDate time.Time `json:"transaction_date" form:"transaction_date" binding:"required"`
 }
 
 func addItemToInventory(c *gin.Context) {
@@ -173,4 +174,56 @@ func addItemToInventory(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, struct{}{})
+}
+
+type GetAvailableStockBody struct {
+	// ProdID unique product id user intend to export from inventory.
+	ProdID string `json:"prod_id" form:"prod_id" binding:"required"`
+}
+
+// TODO we need to add a column "delivered" to indicate if the product is delivered. This variable is set via client notification.
+func GetAvailableStock(c *gin.Context) {
+	body := GetAvailableStockBody{}
+
+	if err := requestbinder.Bind(c, &body); err != nil {
+		c.JSON(
+			http.StatusBadRequest,
+			apperrors.NewErr(
+				apperrors.FailedToBindAPIBody,
+				err.Error(),
+			),
+		)
+
+		return
+	}
+
+	dao := NewInventoryDAO(db.GetDB())
+
+	stock, err := dao.GetAvailableStock(body.ProdID)
+
+	if err == sql.ErrNoRows {
+		c.JSON(
+			http.StatusInternalServerError,
+			apperrors.NewErr(
+				apperrors.NoAvailableProductFound,
+			),
+		)
+
+		return
+	}
+
+	if err != nil {
+		c.JSON(
+			http.StatusInternalServerError,
+			apperrors.NewErr(
+				apperrors.FailedToGetAvailableStock,
+				err.Error(),
+			),
+		)
+
+		return
+
+	}
+
+	c.JSON(http.StatusOK, TrfAvailableStock(*stock))
 }

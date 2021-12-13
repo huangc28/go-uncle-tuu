@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE inventory
+DROP COLUMN IF EXISTS delivered;
+
+COMMIT;
