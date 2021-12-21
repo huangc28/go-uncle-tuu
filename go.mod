@@ -1,4 +1,4 @@
-module huangc28/ios-inapp-trade
+module huangc28/go-ios-iap-vendor
 
 go 1.17
 

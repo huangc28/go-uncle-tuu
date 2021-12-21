@@ -1,7 +1,7 @@
 package app
 
 import (
-	"huangc28/ios-inapp-trade/internal/middlewares"
+	"huangc28/go-ios-iap-vendor/internal/middlewares"
 
 	"github.com/gin-gonic/gin"
 )

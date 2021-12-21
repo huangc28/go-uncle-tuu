@@ -2,7 +2,7 @@ package app
 
 import (
 	"fmt"
-	"huangc28/ios-inapp-trade/internal/models"
+	"huangc28/go-ios-iap-vendor/internal/models"
 )
 
 type TrfedInventoryInfo struct {

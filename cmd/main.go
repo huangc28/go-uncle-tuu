@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"huangc28/ios-inapp-trade/db"
-	"huangc28/ios-inapp-trade/internal/app"
+	"huangc28/go-ios-iap-vendor/db"
+	"huangc28/go-ios-iap-vendor/internal/app"
 	"net/http"
 	"os"
 	"os/signal"

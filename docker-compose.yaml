@@ -1,13 +1,13 @@
 version: '3.8'
 
 networks:
-  ios-inapp-trade:
-    name: inapp-trade-network
+  go-ios-iap-vendor:
+    name: go-ios-iap-vendor
 
 services:
   pg:
     image: mdillon/postgis
-    container_name: inapp-trade-postgres
+    container_name: go-ios-iap-vendor-postgres
     restart: always
     env_file:
       - ./.env
@@ -20,5 +20,5 @@ services:
     volumes:
       - ${DB_DATA_VOLUME}:/var/lib/postgresql/data
     networks:
-      - ios-inapp-trade
+      - go-ios-iap-vendor
 

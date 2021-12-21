@@ -8,9 +8,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"huangc28/ios-inapp-trade/db"
-	"huangc28/ios-inapp-trade/internal/apperrors"
-	"huangc28/ios-inapp-trade/internal/pkg/requestbinder"
+	"huangc28/go-ios-iap-vendor/db"
+	"huangc28/go-ios-iap-vendor/internal/apperrors"
+	"huangc28/go-ios-iap-vendor/internal/pkg/requestbinder"
 )
 
 type CollectProductInfoBody struct {

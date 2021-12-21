@@ -1,8 +1,8 @@
 package app
 
 import (
-	"huangc28/ios-inapp-trade/db"
-	"huangc28/ios-inapp-trade/internal/models"
+	"huangc28/go-ios-iap-vendor/db"
+	"huangc28/go-ios-iap-vendor/internal/models"
 	"log"
 	"time"
 )
