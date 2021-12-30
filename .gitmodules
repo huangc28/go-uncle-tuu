@@ -1,0 +1,3 @@
+[submodule "go-migrate-makefile"]
+	path = go-migrate-makefile
+	url = git@github.com:huangc28/go-migrate-makefile.git
