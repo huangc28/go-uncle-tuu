@@ -22,9 +22,8 @@ run_local_docker:
 # List of systemctl service name to host up worker.
 APP_SERVICE_NAME                    = uncletuu.service
 
-
 deploy: build
-	ssh -t root@api.darkpanda.love 'cd /root/uncletuu/go-uncle-tuu && \
+	ssh -t $(DEPLOY_TARGET) 'cd /root/uncletuu/go-uncle-tuu && \
 		git pull https://$(GITHUB_USER):$(GITHUB_ACCESS_TOKEN)@github.com/huangc28/go-uncle-tuu.git && \
 		make build && \
 		sudo systemctl stop $(APP_SERVICE_NAME) && \
