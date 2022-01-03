@@ -18,8 +18,8 @@ import (
 )
 
 func init() {
-	db.InitDB()
 	config.InitConfig()
+	db.InitDB()
 }
 
 func main() {
@@ -34,10 +34,11 @@ func main() {
 	})
 
 	app.StartApp(r)
+	conf := config.GetAppConf()
 
 	srv := &http.Server{
 		Handler: r,
-		Addr:    fmt.Sprintf(":%d", 3009),
+		Addr:    fmt.Sprintf(":%d", conf.Port),
 
 		// Good practice: enforce timeouts for servers created.
 		WriteTimeout: 15 * time.Second,

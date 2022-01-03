@@ -11,7 +11,7 @@ import (
 )
 
 type AppConf struct {
-	Port string `mapstructure:"PORT"`
+	Port uint `mapstructure:"PORT"`
 
 	DBHost     string `mapstructure:"DB_HOST"`
 	DBPort     uint   `mapstructure:"DB_PORT"`

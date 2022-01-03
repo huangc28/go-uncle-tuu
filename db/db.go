@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"huangc28/go-ios-iap-vendor/config"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -26,13 +27,15 @@ type Conn interface {
 var dbInstance *sqlx.DB
 
 func InitDB() {
+	conf := config.GetAppConf()
+
 	dsn := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		"127.0.0.1",
-		5435,
-		"postgres",
-		"1234",
-		"inapp_trade",
+		conf.DBHost,
+		conf.DBPort,
+		conf.DBUser,
+		conf.DBPassword,
+		conf.DBDbname,
 	)
 
 	driver, err := sqlx.Open("postgres", dsn)
