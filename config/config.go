@@ -17,7 +17,7 @@ type AppConf struct {
 	DBPort     uint   `mapstructure:"DB_PORT"`
 	DBUser     string `mapstructure:"DB_USER"`
 	DBPassword string `mapstructure:"DB_PASSWORD"`
-	DBDbname   string `mapstructure:"DB_DBNAME"`
+	DBDbname   string `mapstructure:"DB_NAME"`
 	DBTimeZone string `mapstructure:"DB_TIMEZONE"`
 }
 
