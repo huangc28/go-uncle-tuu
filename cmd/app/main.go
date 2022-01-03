@@ -26,6 +26,16 @@ func main() {
 	r := gin.New()
 
 	r.GET("/health", func(c *gin.Context) {
+		db := db.GetDB()
+
+		if err := db.Ping(); err != nil {
+			c.JSON(http.StatusInternalServerError, struct {
+				Error string `json:"error"`
+			}{
+				Error: err.Error(),
+			})
+		}
+
 		c.JSON(http.StatusOK, struct {
 			OK bool
 		}{
