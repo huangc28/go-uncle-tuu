@@ -17,6 +17,20 @@ run_local_docker:
 		--env-file .env up \
 		-d
 
+MIGRATE_CMD=migrate
+MIGRATE_CREATE_CMD=create
+MIGRATE_UP_CMD=up
+MIGRATE_DOWN_CMD=down
+
+PG_DSN=postgres://$(PG_USER):$(PG_PASSWORD)@$(PG_HOST):$(PG_PORT)/darkpanda?sslmode=disable
+PG_TEST_DSN=postgres://$(TEST_PG_USER):$(TEST_PG_PASSWORD)@$(TEST_PG_HOST):$(TEST_PG_PORT)/darkpanda?sslmode=disable
+
+# Generate models from migration SQL schemas. This tool uses
+# `https://github.com/kyleconroy/sqlc` to parse SQL syntax
+# and generate corresponding models.
+gen_model:
+	gen-model gen --dbname=inapp_trade --host=$(DB_HOST) --password=$(DB_PASSWORD) --port=$(DB_PORT) --username=$(DB_USER)
+
 # Build & Deploy
 
 # List of systemctl service name to host up worker.
