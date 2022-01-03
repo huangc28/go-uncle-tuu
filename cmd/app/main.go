@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"huangc28/go-ios-iap-vendor/config"
 	"huangc28/go-ios-iap-vendor/db"
 	"huangc28/go-ios-iap-vendor/internal/app"
 	"net/http"
@@ -18,6 +19,7 @@ import (
 
 func init() {
 	db.InitDB()
+	config.InitConfig()
 }
 
 func main() {

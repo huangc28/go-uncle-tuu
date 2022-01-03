@@ -13,7 +13,7 @@ ifeq (, $(shell which gen-model))
 endif
 
 run_local: run_local_docker
-	go mod tidy && go run cmd/main.go
+	go mod tidy && go run cmd/app/main.go
 
 run_local_docker:
 	docker-compose \
