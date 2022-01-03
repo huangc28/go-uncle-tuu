@@ -34,6 +34,8 @@ func main() {
 			}{
 				Error: err.Error(),
 			})
+
+			return
 		}
 
 		c.JSON(http.StatusOK, struct {
