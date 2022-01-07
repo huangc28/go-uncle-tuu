@@ -3,7 +3,7 @@ packages:
   - name: "models"
     path: "internal/app/models"
     queries: "./db/query/"
-    schema: "./db/"
+    schema: "./db/schema.sql"
     engine: "postgresql"
     emit_json_tags: true
     emit_prepared_queries: true

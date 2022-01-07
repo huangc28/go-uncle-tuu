@@ -11,7 +11,8 @@ import (
 )
 
 type AppConf struct {
-	Port uint `mapstructure:"PORT"`
+	Port      uint   `mapstructure:"PORT"`
+	JWTSecret string `mapstructure:"JWT_SECRET"`
 
 	DBHost     string `mapstructure:"DB_HOST"`
 	DBPort     uint   `mapstructure:"DB_PORT"`

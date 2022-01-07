@@ -37,6 +37,7 @@ func GetErrorMessage(code string) string {
 	if len(MasterErrorMessageMap) == 0 {
 		MasterErrorMessageMap = mergeMaps(
 			appErrMap,
+			authErrMap,
 		)
 	}
 

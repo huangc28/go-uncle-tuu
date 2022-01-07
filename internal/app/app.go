@@ -1,6 +1,7 @@
 package app
 
 import (
+	"huangc28/go-ios-iap-vendor/internal/app/auth"
 	"huangc28/go-ios-iap-vendor/internal/middlewares"
 
 	"github.com/gin-gonic/gin"
@@ -26,4 +27,6 @@ func StartApp(e *gin.Engine) {
 	)
 
 	rv1.GET("/stock", GetAvailableStock)
+
+	auth.Routes(rv1)
 }
