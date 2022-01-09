@@ -66,7 +66,7 @@ func LoginHandler(c *gin.Context) {
 		c.JSON(
 			http.StatusBadRequest,
 			apperrors.NewErr(
-				apperrors.FailedToGetUserByUsername,
+				apperrors.PasswordNotMatch,
 				"incorrect password.",
 			),
 		)
