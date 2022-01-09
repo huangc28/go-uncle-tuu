@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type LoginHandlerBody struct {
@@ -61,23 +62,21 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	// TODO add bcrypt hash on password
-	if body.Password != user.Password {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password)); err != nil {
 		c.JSON(
 			http.StatusBadRequest,
 			apperrors.NewErr(
 				apperrors.FailedToGetUserByUsername,
-				err.Error(),
+				"incorrect password.",
 			),
 		)
-
 		return
 	}
 
 	// Generate jwt
 	jwt, err := jwtactor.CreateToken(
 		user.Uuid,
-		config.GetAppConf().JWTSecret,
+		config.GetAppConf().APIJWTSecret,
 	)
 
 	if err != nil {

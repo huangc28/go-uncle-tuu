@@ -1,11 +1,13 @@
 package main
 
 import (
-	"huangc28/go-ios-iap-vendor/config"
-	"huangc28/go-ios-iap-vendor/db"
 	"log"
 
 	"github.com/teris-io/shortid"
+	"golang.org/x/crypto/bcrypt"
+
+	"huangc28/go-ios-iap-vendor/config"
+	"huangc28/go-ios-iap-vendor/db"
 )
 
 func init() {
@@ -19,18 +21,22 @@ func init() {
 func main() {
 	username := "admin"
 	password := "1234"
-	sid, err := shortid.Generate()
 
+	sid, err := shortid.Generate()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatalf("bcrypt.GenerateFromPassword failed, err: %v", err)
 	}
 
 	dbClient := db.GetDB()
 	_, err = dbClient.Exec(`
 INSERT INTO users (username, password, uuid)
 VALUES ($1, $2, $3);
-`, username, password, sid)
-
+`, username, hashedPwd, sid)
 	if err != nil {
 		log.Fatal(err)
 	}
