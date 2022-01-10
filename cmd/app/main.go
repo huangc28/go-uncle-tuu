@@ -50,7 +50,7 @@ func main() {
 
 	srv := &http.Server{
 		Handler: r,
-		Addr:    fmt.Sprintf(":%d", conf.Port),
+		Addr:    fmt.Sprintf(":%d", conf.APIPort),
 
 		// Good practice: enforce timeouts for servers created.
 		WriteTimeout: 15 * time.Second,
