@@ -9,7 +9,7 @@ ifneq (,$(wildcard ./.env))
 endif
 
 ifeq (, $(shell which gen-model))
-	$(error "No gen-model in $(GOPATH)/bin, please install git@github.com:huangc28/go-migration-model-generator.git before proceed.")
+	$(error "No gen-model in $(GOPATH)/bin, please install git@github.com:huangc28/go-migration-model-generator.git before proceeding")
 endif
 
 run_local: run_local_docker

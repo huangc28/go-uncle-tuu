@@ -44,7 +44,7 @@ INSERT INTO inventory (
 }
 
 // Find the first available stock in inventory. If no stock available, return no stock error.
-// If we find the first available stock, row lock it first, update available to false, then retu the stock info.
+// If we find the first available stock, row lock it first, update available to false, then return the stock info.
 func (dao *InventoryDAO) GetAvailableStock(prodID string) (*models.InventoryProduct, error) {
 	rowLockQuery := `
 SELECT
@@ -81,7 +81,7 @@ RETURNING *;
 		return nil, err
 	}
 
-	log.Printf("avai stock %v", m)
+	log.Printf("available stock %v", m)
 
 	return &m, nil
 }

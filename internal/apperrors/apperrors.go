@@ -20,7 +20,6 @@ type Error struct {
 }
 
 func NewErr(errCode string, args ...interface{}) *Error {
-
 	errMsg := GetErrorMessage(errCode)
 
 	if len(args) == 1 {

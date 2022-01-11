@@ -41,10 +41,7 @@ func LoginHandler(c *gin.Context) {
 	if err == sql.ErrNoRows {
 		c.JSON(
 			http.StatusBadRequest,
-			apperrors.NewErr(
-				apperrors.UserNotFound,
-				err.Error(),
-			),
+			apperrors.NewErr(apperrors.UserNotFound),
 		)
 
 		return
@@ -65,11 +62,9 @@ func LoginHandler(c *gin.Context) {
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password)); err != nil {
 		c.JSON(
 			http.StatusBadRequest,
-			apperrors.NewErr(
-				apperrors.PasswordNotMatch,
-				"incorrect password.",
-			),
+			apperrors.NewErr(apperrors.PasswordNotMatch),
 		)
+
 		return
 	}
 
