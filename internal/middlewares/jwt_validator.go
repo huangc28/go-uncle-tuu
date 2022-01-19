@@ -64,12 +64,9 @@ func JWTValidator(opt JwtMiddlewareOptions) gin.HandlerFunc {
 		}
 
 		if len(token) <= 0 {
-			c.JSON(
+			c.AbortWithError(
 				http.StatusInternalServerError,
-				apperrors.NewErr(
-					apperrors.MissingJWTToken,
-					err.Error(),
-				),
+				apperrors.NewErr(apperrors.MissingJWTToken),
 			)
 
 			return
@@ -82,7 +79,7 @@ func JWTValidator(opt JwtMiddlewareOptions) gin.HandlerFunc {
 
 		if err != nil {
 			if err == jwt.ErrSignatureInvalid {
-				c.JSON(
+				c.AbortWithError(
 					http.StatusUnauthorized,
 					apperrors.NewErr(apperrors.MissingJWTToken),
 				)
@@ -90,10 +87,9 @@ func JWTValidator(opt JwtMiddlewareOptions) gin.HandlerFunc {
 				return
 			}
 
-			c.JSON(
+			c.AbortWithError(
 				http.StatusBadRequest,
 				apperrors.NewErr(
-
 					apperrors.FailedToParseSignature,
 					err.Error(),
 				),
@@ -104,7 +100,7 @@ func JWTValidator(opt JwtMiddlewareOptions) gin.HandlerFunc {
 		}
 
 		if !tkn.Valid {
-			c.JSON(
+			c.AbortWithError(
 				http.StatusUnauthorized,
 				apperrors.NewErr(
 					apperrors.InvalidSigature,

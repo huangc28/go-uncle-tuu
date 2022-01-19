@@ -19,6 +19,10 @@ type Error struct {
 	Err     string `json:"err"`
 }
 
+func (e *Error) Error() string {
+	return e.Err
+}
+
 func NewErr(errCode string, args ...interface{}) *Error {
 	errMsg := GetErrorMessage(errCode)
 

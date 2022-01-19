@@ -4,6 +4,7 @@ import (
 	"huangc28/go-ios-iap-vendor/internal/app/auth"
 	"huangc28/go-ios-iap-vendor/internal/app/importer"
 	"huangc28/go-ios-iap-vendor/internal/app/inventory"
+	"huangc28/go-ios-iap-vendor/internal/apperrors"
 	"huangc28/go-ios-iap-vendor/internal/middlewares"
 
 	"github.com/gin-gonic/gin"
@@ -11,6 +12,7 @@ import (
 
 func StartApp(e *gin.Engine) {
 	e.Use(middlewares.ResponseLogger)
+	e.Use(apperrors.HandleError())
 	rv1 := e.Group("/v1")
 
 	rv1.POST(

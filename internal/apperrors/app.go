@@ -10,6 +10,7 @@ const (
 	NoAvailableProductFound    = "1000008"
 	FailedToGetAvailableStock  = "1000009"
 	FailedToBindJWTInHeader    = "1000010"
+	UnknownErrorToApplication  = "1000011"
 )
 
 var appErrMap = map[string]string{

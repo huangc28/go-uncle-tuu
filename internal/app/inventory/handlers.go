@@ -19,7 +19,7 @@ func GetAvailableStock(c *gin.Context) {
 	body := GetAvailableStockBody{}
 
 	if err := requestbinder.Bind(c, &body); err != nil {
-		c.JSON(
+		c.AbortWithError(
 			http.StatusBadRequest,
 			apperrors.NewErr(
 				apperrors.FailedToBindAPIBody,
@@ -35,7 +35,7 @@ func GetAvailableStock(c *gin.Context) {
 	stock, err := dao.GetAvailableStock(body.ProdID)
 
 	if err == sql.ErrNoRows {
-		c.JSON(
+		c.AbortWithError(
 			http.StatusInternalServerError,
 			apperrors.NewErr(
 				apperrors.NoAvailableProductFound,
@@ -46,7 +46,7 @@ func GetAvailableStock(c *gin.Context) {
 	}
 
 	if err != nil {
-		c.JSON(
+		c.AbortWithError(
 			http.StatusInternalServerError,
 			apperrors.NewErr(
 				apperrors.FailedToGetAvailableStock,
