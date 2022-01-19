@@ -9,6 +9,7 @@ const (
 	FailedToAddItemToInventory = "1000007"
 	NoAvailableProductFound    = "1000008"
 	FailedToGetAvailableStock  = "1000009"
+	FailedToBindJWTInHeader    = "1000010"
 )
 
 var appErrMap = map[string]string{

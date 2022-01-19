@@ -4,7 +4,6 @@ import (
 	"huangc28/go-ios-iap-vendor/db"
 	"huangc28/go-ios-iap-vendor/internal/apperrors"
 	"huangc28/go-ios-iap-vendor/internal/pkg/requestbinder"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -46,8 +45,6 @@ func GetPurchasedRecordsHandler(c *gin.Context) {
 
 		return
 	}
-
-	log.Printf("rec %v", recs)
 
 	trfRecs := TtfPurchaseRecords(recs)
 

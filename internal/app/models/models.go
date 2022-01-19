@@ -40,6 +40,7 @@ type Inventory struct {
 	TransactionTime time.Time      `json:"transaction_time"`
 	Uuid            string         `json:"uuid"`
 	Delivered       bool           `json:"delivered"`
+	ReservedForUser sql.NullString `json:"reserved_for_user"`
 }
 
 type ProductInfo struct {

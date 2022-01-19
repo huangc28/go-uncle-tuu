@@ -1,7 +1,6 @@
 package app
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 	"time"
@@ -174,56 +173,4 @@ func addItemToInventory(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, struct{}{})
-}
-
-type GetAvailableStockBody struct {
-	// ProdID unique product id user intend to export from inventory.
-	ProdID string `json:"prod_id" form:"prod_id" binding:"required"`
-}
-
-// TODO we need to add a column "delivered" to indicate if the product is delivered. This variable is set via client notification.
-func GetAvailableStock(c *gin.Context) {
-	body := GetAvailableStockBody{}
-
-	if err := requestbinder.Bind(c, &body); err != nil {
-		c.JSON(
-			http.StatusBadRequest,
-			apperrors.NewErr(
-				apperrors.FailedToBindAPIBody,
-				err.Error(),
-			),
-		)
-
-		return
-	}
-
-	dao := NewInventoryDAO(db.GetDB())
-
-	stock, err := dao.GetAvailableStock(body.ProdID)
-
-	if err == sql.ErrNoRows {
-		c.JSON(
-			http.StatusInternalServerError,
-			apperrors.NewErr(
-				apperrors.NoAvailableProductFound,
-			),
-		)
-
-		return
-	}
-
-	if err != nil {
-		c.JSON(
-			http.StatusInternalServerError,
-			apperrors.NewErr(
-				apperrors.FailedToGetAvailableStock,
-				err.Error(),
-			),
-		)
-
-		return
-
-	}
-
-	c.JSON(http.StatusOK, TrfAvailableStock(*stock))
 }

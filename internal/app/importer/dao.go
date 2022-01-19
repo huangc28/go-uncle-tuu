@@ -3,7 +3,6 @@ package importer
 import (
 	"huangc28/go-ios-iap-vendor/db"
 	"huangc28/go-ios-iap-vendor/internal/app/models"
-	"log"
 )
 
 type ImporterDAO struct {
@@ -17,8 +16,6 @@ func NewImporterDAO(conn db.Conn) *ImporterDAO {
 }
 
 func (dao *ImporterDAO) GetPurchasedRecords(bundleID string, perPage, offset int) ([]models.PurchaseRecord, error) {
-	log.Printf("DEBUG params %v %v %v", bundleID, perPage, offset)
-
 	query := `
 SELECT
 	inventory.transaction_id,
@@ -45,15 +42,11 @@ OFFSET $3;
 	ms := make([]models.PurchaseRecord, 0)
 
 	for rows.Next() {
-		log.Printf("mmm~~~")
-
 		m := models.PurchaseRecord{}
 
 		if err := rows.StructScan(&m); err != nil {
 			return nil, err
 		}
-
-		log.Printf("model %v", m)
 
 		ms = append(ms, m)
 	}

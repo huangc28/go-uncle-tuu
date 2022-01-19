@@ -7,7 +7,7 @@ import (
 
 type TrfPurchaseRecord struct {
 	UUID            string    `json:"uuid"`
-	ProdName        string    `json"prod_name"`
+	ProdName        string    `json:"prod_name"`
 	TransactionID   string    `json:"transaction_id"`
 	TransactionTime time.Time `json:"transaction_time"`
 }
