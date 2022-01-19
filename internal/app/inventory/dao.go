@@ -23,7 +23,7 @@ func (dao *InventoryDAO) GetAvailableStock(prodID string) (*models.Inventory, er
 
 	rowLockQuery := `
 SELECT
-	inventory.*,
+	inventory.*
 FROM
 	inventory
 INNER JOIN product_info ON inventory.prod_id = product_info.id
