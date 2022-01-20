@@ -6,6 +6,7 @@ import (
 	"huangc28/go-ios-iap-vendor/config"
 	"huangc28/go-ios-iap-vendor/db"
 	"huangc28/go-ios-iap-vendor/internal/app"
+	"huangc28/go-ios-iap-vendor/internal/app/deps"
 	"net/http"
 	"os"
 	"os/signal"
@@ -20,6 +21,9 @@ import (
 func init() {
 	config.InitConfig()
 	db.InitDB()
+	if err := deps.Get().Run(); err != nil {
+		log.Fatalf("failed to initialize dependency container %s", err.Error())
+	}
 }
 
 func main() {

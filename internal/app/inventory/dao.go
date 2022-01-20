@@ -16,11 +16,44 @@ func NewInventoryDAO(conn db.Conn) *InventoryDAO {
 	}
 }
 
+func (dao *InventoryDAO) GetUserReservedStockByUUID(prodID string, userID int) ([]*models.Inventory, error) {
+	query := `
+SELECT
+	inventory.*
+FROM
+	inventory
+INNER JOIN product_info ON inventory.prod_id = product_info.id
+WHERE
+	inventory.available=true
+AND
+	inventory.reserved_for_user = $1;
+AND
+	product_info.prod_id = $2
+	`
+
+	rows, err := dao.conn.Queryx(query, prodID, userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ms := make([]*models.Inventory, 0)
+	for rows.Next() {
+		var m models.Inventory
+
+		if err := rows.StructScan(&m); err != nil {
+			return nil, err
+		}
+
+		ms = append(ms, &m)
+	}
+
+	return ms, nil
+}
+
 // Find the first available stock in inventory. If no stock available, return no stock error.
 // If we find the first available stock, row lock it first, update available to false, then return the stock info.
 func (dao *InventoryDAO) GetAvailableStock(prodID string) (*models.Inventory, error) {
-	log.Printf("prodID %s", prodID)
-
 	rowLockQuery := `
 SELECT
 	inventory.*

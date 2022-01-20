@@ -32,3 +32,15 @@ func TrfAvailableStock(m models.Inventory) interface{} {
 		m.Receipt.String,
 	}
 }
+
+type TrfedReservedStocks struct {
+	Count int `json:"count"`
+}
+
+// @TODO: We are not responding stock information here. Respond only the number
+// of reserved stocks.
+func TrfReservedStocks(ms []*models.Inventory) TrfedReservedStocks {
+	return TrfedReservedStocks{
+		Count: len(ms),
+	}
+}
