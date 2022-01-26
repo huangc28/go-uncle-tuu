@@ -79,3 +79,76 @@ func ReportReceived(c *gin.Context, depCon container.Container) {
 
 	c.JSON(http.StatusOK, struct{}{})
 }
+
+type ReportUnreceivedBody struct {
+	UUID string `form:"uuid" json:"uuid" binding:"required"`
+}
+
+func ReportUnreceived(c *gin.Context, depCon container.Container) {
+	body := ReportUnreceivedBody{}
+
+	if err := requestbinder.Bind(c, &body); err != nil {
+		c.AbortWithError(
+			http.StatusBadRequest,
+			apperrors.NewErr(
+				apperrors.FailedToBindAPIBody,
+				err.Error(),
+			),
+		)
+
+		return
+	}
+
+	var (
+		inventoryDao contracts.InventoryDAOer
+		userDao      contracts.UserDAOer
+	)
+
+	depCon.Make(&inventoryDao)
+	depCon.Make(&userDao)
+
+	user, err := userDao.GetUserByUUID(c.GetString("user_uuid"), "id")
+
+	if err != nil {
+		c.AbortWithError(
+			http.StatusBadRequest,
+			apperrors.NewErr(apperrors.FailedToGetUserByUUID),
+		)
+
+		return
+	}
+
+	// Makesure the stock is reserved for that user.
+	isReserved, err := inventoryDao.IsStockReservedForUser(body.UUID, user.ID)
+
+	if err != nil {
+		c.AbortWithError(
+			http.StatusBadRequest,
+			apperrors.NewErr(apperrors.FailedToCheckStockReservedForUser),
+		)
+
+		return
+	}
+
+	if !isReserved {
+		c.AbortWithError(
+			http.StatusBadRequest,
+			apperrors.NewErr(apperrors.StockIsNotReservedForTheUser),
+		)
+
+		return
+	}
+
+	if err := inventoryDao.MarkStockAsNotDelivered(body.UUID); err != nil {
+
+		c.AbortWithError(
+			http.StatusInternalServerError,
+			apperrors.NewErr(apperrors.FailedToMarkStockAsNotDeliver),
+		)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, struct{}{})
+
+}

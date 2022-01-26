@@ -131,15 +131,21 @@ WHERE
 	return int64(m.ReservedForUser.Int32) == userID, nil
 }
 
-func (dao *InventoryDAO) MarkStockAsDelivered(stockUUID string) error {
+func (dao *InventoryDAO) markStockDeliverStatus(stockUUID string, status models.DeliveredStatus) error {
 	query := `
 UPDATE inventory
 SET delivered = $1
 WHERE UUID = $2;
 `
-	if _, err := dao.conn.Exec(query, models.DeliveredStatusDelivered, stockUUID); err != nil {
+	if _, err := dao.conn.Exec(query, status, stockUUID); err != nil {
 		return err
 	}
+}
 
-	return nil
+func (dao *InventoryDAO) MarkStockAsDelivered(stockUUID string) error {
+	return dao.markStockDeliverStatus(stockUUID, models.DeliveredStatusDelivered)
+}
+
+func (dao *InventoryDAO) MarkStockAsNotDelivered(stockUUID string) error {
+	return dao.markStockDeliverStatus(stockUUID, models.DeliveredStatusNotDelivered)
 }
