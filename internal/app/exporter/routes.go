@@ -18,9 +18,14 @@ func Routes(r *gin.RouterGroup, depCon container.Container) {
 			},
 		),
 	)
+
 	g.POST("/report-received",
 		func(c *gin.Context) {
 			ReportReceived(c, depCon)
 		},
 	)
+
+	g.POST("/report-not-received", func(c *gin.Context) {
+		ReportUnreceived(c, depCon)
+	})
 }

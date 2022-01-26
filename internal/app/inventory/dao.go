@@ -140,6 +140,8 @@ WHERE UUID = $2;
 	if _, err := dao.conn.Exec(query, status, stockUUID); err != nil {
 		return err
 	}
+
+	return nil
 }
 
 func (dao *InventoryDAO) MarkStockAsDelivered(stockUUID string) error {
