@@ -6,7 +6,6 @@ import (
 	"huangc28/go-ios-iap-vendor/internal/app/contracts"
 	"huangc28/go-ios-iap-vendor/internal/apperrors"
 	"huangc28/go-ios-iap-vendor/internal/pkg/requestbinder"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -55,8 +54,16 @@ func GetReservedStock(c *gin.Context, depCon container.Container) {
 	invDAO := NewInventoryDAO(db.GetDB())
 
 	// Only white listed user can access to all products even reserved products.
+	reservedStockInfo, err := invDAO.GetUserReservedStockByUUID(body.ProdID, int(user.ID))
 
-	reservedStock, err := invDAO.GetUserReservedStockByUUID(body.ProdID, int(user.ID))
+	if err == sql.ErrNoRows {
+		c.AbortWithError(
+			http.StatusBadRequest,
+			apperrors.NewErr(apperrors.NoReservedStockAvailable),
+		)
+
+		return
+	}
 
 	if err != nil {
 		c.AbortWithError(
@@ -71,9 +78,7 @@ func GetReservedStock(c *gin.Context, depCon container.Container) {
 
 	}
 
-	log.Printf("DEBUG* reservedStock %v", reservedStock)
-
-	c.JSON(http.StatusOK, TrfReservedStocks(reservedStock))
+	c.JSON(http.StatusOK, reservedStockInfo)
 }
 
 type GetAvailableStockBody struct {

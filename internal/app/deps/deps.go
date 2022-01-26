@@ -1,6 +1,7 @@
 package deps
 
 import (
+	"huangc28/go-ios-iap-vendor/internal/app/inventory"
 	"huangc28/go-ios-iap-vendor/internal/app/users"
 	"sync"
 
@@ -34,6 +35,7 @@ func Get() *DepContainer {
 func (dep *DepContainer) Run() error {
 	depRegistrars := []DepRegistrar{
 		users.UserDaoServiceProvider(dep.Container),
+		inventory.InventoryDaoServiceProvider(dep.Container),
 	}
 
 	for _, depRegistrar := range depRegistrars {

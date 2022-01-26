@@ -3,6 +3,7 @@ package app
 import (
 	"huangc28/go-ios-iap-vendor/internal/app/auth"
 	"huangc28/go-ios-iap-vendor/internal/app/deps"
+	"huangc28/go-ios-iap-vendor/internal/app/exporter"
 	"huangc28/go-ios-iap-vendor/internal/app/importer"
 	"huangc28/go-ios-iap-vendor/internal/app/inventory"
 	"huangc28/go-ios-iap-vendor/internal/apperrors"
@@ -36,4 +37,6 @@ func StartApp(e *gin.Engine) {
 	importer.Routes(rv1)
 
 	inventory.Routes(rv1, deps.Get().Container)
+
+	exporter.Routes(rv1, deps.Get().Container)
 }

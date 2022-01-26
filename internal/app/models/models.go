@@ -8,6 +8,26 @@ import (
 	"time"
 )
 
+type DeliveredStatus string
+
+const (
+	DeliveredStatusNotYetReported DeliveredStatus = "not_yet_reported"
+	DeliveredStatusDelivered      DeliveredStatus = "delivered"
+	DeliveredStatusNotDelivered   DeliveredStatus = "not_delivered"
+)
+
+func (e *DeliveredStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = DeliveredStatus(s)
+	case string:
+		*e = DeliveredStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for DeliveredStatus: %T", src)
+	}
+	return nil
+}
+
 type Roles string
 
 const (
@@ -29,18 +49,18 @@ func (e *Roles) Scan(src interface{}) error {
 }
 
 type Inventory struct {
-	ID              int64          `json:"id"`
-	ProdID          sql.NullInt32  `json:"prod_id"`
-	TransactionID   sql.NullString `json:"transaction_id"`
-	Receipt         sql.NullString `json:"receipt"`
-	Available       sql.NullBool   `json:"available"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       sql.NullTime   `json:"updated_at"`
-	DeletedAt       sql.NullTime   `json:"deleted_at"`
-	TransactionTime time.Time      `json:"transaction_time"`
-	Uuid            string         `json:"uuid"`
-	Delivered       bool           `json:"delivered"`
-	ReservedForUser sql.NullString `json:"reserved_for_user"`
+	ID              int64           `json:"id"`
+	ProdID          sql.NullInt32   `json:"prod_id"`
+	TransactionID   sql.NullString  `json:"transaction_id"`
+	Receipt         sql.NullString  `json:"receipt"`
+	Available       sql.NullBool    `json:"available"`
+	CreatedAt       time.Time       `json:"created_at"`
+	UpdatedAt       sql.NullTime    `json:"updated_at"`
+	DeletedAt       sql.NullTime    `json:"deleted_at"`
+	TransactionTime time.Time       `json:"transaction_time"`
+	Uuid            string          `json:"uuid"`
+	ReservedForUser sql.NullInt32   `json:"reserved_for_user"`
+	Delivered       DeliveredStatus `json:"delivered"`
 }
 
 type ProductInfo struct {

@@ -1,31 +1,26 @@
-package inventory
+package exporter
 
 import (
 	"huangc28/go-ios-iap-vendor/config"
 	"huangc28/go-ios-iap-vendor/internal/middlewares"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/golobby/container/pkg/container"
 )
 
 func Routes(r *gin.RouterGroup, depCon container.Container) {
 	g := r.Group(
-		"/inventory",
+		"/exporter",
 		middlewares.JWTValidator(
 			middlewares.JwtMiddlewareOptions{
 				Secret: config.GetAppConf().APIJWTSecret,
 			},
 		),
 	)
-
-	// Check if there are enough quantity of the stock that he/she
-	// wants to export.
-	g.GET("/reserved-stock", func(c *gin.Context) {
-		GetReservedStock(c, depCon)
-	})
-
-	g.GET(
-		"/available-stock",
-		GetAvailableStock,
+	g.POST("/report-received",
+		func(c *gin.Context) {
+			ReportReceived(c, depCon)
+		},
 	)
 }

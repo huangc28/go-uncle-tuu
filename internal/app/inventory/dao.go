@@ -1,9 +1,13 @@
 package inventory
 
 import (
+	"errors"
 	"huangc28/go-ios-iap-vendor/db"
+	"huangc28/go-ios-iap-vendor/internal/app/contracts"
 	"huangc28/go-ios-iap-vendor/internal/app/models"
 	"log"
+
+	cintrnal "github.com/golobby/container/pkg/container"
 )
 
 type InventoryDAO struct {
@@ -16,39 +20,43 @@ func NewInventoryDAO(conn db.Conn) *InventoryDAO {
 	}
 }
 
-func (dao *InventoryDAO) GetUserReservedStockByUUID(prodID string, userID int) ([]*models.Inventory, error) {
+func InventoryDaoServiceProvider(c cintrnal.Container) func() error {
+	return func() error {
+		c.Transient(func() contracts.InventoryDAOer {
+			return NewInventoryDAO(db.GetDB())
+		})
+
+		return nil
+	}
+}
+
+func (dao *InventoryDAO) GetUserReservedStockByUUID(prodID string, userID int) (*models.ReservedStockInfo, error) {
 	query := `
 SELECT
-	inventory.*
+	COUNT(inventory.id) AS reserved_num,
+	product_info.prod_name,
+	product_info.price
 FROM
 	inventory
 INNER JOIN product_info ON inventory.prod_id = product_info.id
 WHERE
 	inventory.available=true
 AND
-	inventory.reserved_for_user = $1;
+	inventory.reserved_for_user = $2
 AND
-	product_info.prod_id = $2
+	product_info.prod_id = $1
+GROUP BY
+	product_info.prod_name,
+	product_info.price
 	`
+	var m models.ReservedStockInfo
 
-	rows, err := dao.conn.Queryx(query, prodID, userID)
+	if err := dao.conn.QueryRowx(query, prodID, userID).StructScan(&m); err != nil {
 
-	if err != nil {
 		return nil, err
 	}
 
-	ms := make([]*models.Inventory, 0)
-	for rows.Next() {
-		var m models.Inventory
-
-		if err := rows.StructScan(&m); err != nil {
-			return nil, err
-		}
-
-		ms = append(ms, &m)
-	}
-
-	return ms, nil
+	return &m, nil
 }
 
 // Find the first available stock in inventory. If no stock available, return no stock error.
@@ -92,4 +100,46 @@ RETURNING *;
 	log.Printf("available stock %v", m)
 
 	return &m, nil
+}
+
+func (dao *InventoryDAO) IsStockReservedForUser(stockUUID string, userID int64) (bool, error) {
+	query := `
+SELECT
+	available,
+	delivered,
+	reserved_for_user
+FROM
+	inventory
+WHERE
+	uuid = $1;
+	`
+
+	var m models.Inventory
+
+	if err := dao.conn.QueryRowx(query, stockUUID).StructScan(&m); err != nil {
+		return false, err
+	}
+
+	if m.Available.Bool {
+		return false, errors.New("stock is still available, it's not exported yet")
+	}
+
+	if m.Delivered == models.DeliveredStatusDelivered {
+		return false, errors.New("stock has already delivered")
+	}
+
+	return int64(m.ReservedForUser.Int32) == userID, nil
+}
+
+func (dao *InventoryDAO) MarkStockAsDelivered(stockUUID string) error {
+	query := `
+UPDATE inventory
+SET delivered = $1
+WHERE UUID = $2;
+`
+	if _, err := dao.conn.Exec(query, models.DeliveredStatusDelivered, stockUUID); err != nil {
+		return err
+	}
+
+	return nil
 }

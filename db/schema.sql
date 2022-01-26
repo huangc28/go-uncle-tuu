@@ -78,6 +78,29 @@ BEGIN;
 ALTER TABLE users
 ADD COLUMN uuid VARCHAR(20) UNIQUE NOT NULL;
 COMMIT;
+BEGIN;
 ALTER TABLE inventory
-ADD COLUMN reserved_for_user TEXT;
+ADD COLUMN IF NOT EXISTS reserved_for_user int;
+
+ALTER TABLE inventory
+   ADD CONSTRAINT fk_reserve_for_user_id
+   FOREIGN KEY (reserved_for_user)
+   REFERENCES users(id);
+
+COMMIT;
+BEGIN;
+ALTER TABLE inventory
+DROP COLUMN IF EXISTS delivered;
+COMMIT;
+BEGIN;
+
+CREATE TYPE delivered_status AS ENUM (
+    'not_yet_reported',
+    'delivered',
+    'not_delivered'
+);
+
+ALTER TABLE inventory
+ADD COLUMN delivered delivered_status DEFAULT 'not_yet_reported';
+
 COMMIT;
