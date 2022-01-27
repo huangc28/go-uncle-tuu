@@ -33,7 +33,7 @@ PG_TEST_DSN=postgres://$(TEST_PG_USER):$(TEST_PG_PASSWORD)@$(TEST_PG_HOST):$(TES
 # `https://github.com/kyleconroy/sqlc` to parse SQL syntax
 # and generate corresponding models.
 gen_model:
-	gen-model gen --dbname=inapp_trade --host=$(DB_HOST) --password=$(DB_PASSWORD) --port=$(DB_PORT) --username=$(DB_USER)
+	gen-model gen --dbname=$(DB_NAME) --host=$(DB_HOST) --password=$(DB_PASSWORD) --port=$(DB_PORT) --username=$(DB_USER)
 
 # Build & Deploy
 
