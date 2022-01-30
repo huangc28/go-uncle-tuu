@@ -2,6 +2,7 @@ package app
 
 import (
 	"huangc28/go-ios-iap-vendor/internal/app/auth"
+	"huangc28/go-ios-iap-vendor/internal/app/collector"
 	"huangc28/go-ios-iap-vendor/internal/app/deps"
 	"huangc28/go-ios-iap-vendor/internal/app/exporter"
 	"huangc28/go-ios-iap-vendor/internal/app/importer"
@@ -17,11 +18,6 @@ func StartApp(e *gin.Engine) {
 	e.Use(apperrors.HandleError())
 	rv1 := e.Group("/v1")
 
-	rv1.POST(
-		"/collect-product-info",
-		collectProductInfoHandler,
-	)
-
 	rv1.GET(
 		"/inventory",
 		fetchInventoryHandler,
@@ -31,6 +27,8 @@ func StartApp(e *gin.Engine) {
 		"/add-item-to-inventory",
 		addItemToInventory,
 	)
+
+	collector.Routes(rv1)
 
 	auth.Routes(rv1)
 

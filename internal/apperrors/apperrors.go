@@ -43,6 +43,7 @@ func GetErrorMessage(code string) string {
 			authErrMap,
 			inventoryErrMap,
 			exporterErrMap,
+			collectorErrMap,
 		)
 	}
 
