@@ -23,11 +23,6 @@ func StartApp(e *gin.Engine) {
 		fetchInventoryHandler,
 	)
 
-	rv1.POST(
-		"/add-item-to-inventory",
-		addItemToInventory,
-	)
-
 	collector.Routes(rv1)
 
 	auth.Routes(rv1)
