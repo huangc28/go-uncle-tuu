@@ -13,6 +13,6 @@ require (
 
 require (
 	github.com/golobby/container v1.3.0
-	github.com/teris-io/shortid v0.0.0-20201117134242-e59966efd125 // indirect
+	github.com/teris-io/shortid v0.0.0-20201117134242-e59966efd125
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
 )

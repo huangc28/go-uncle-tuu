@@ -104,3 +104,9 @@ ALTER TABLE inventory
 ADD COLUMN delivered delivered_status DEFAULT 'not_yet_reported';
 
 COMMIT;
+BEGIN;
+
+ALTER TABLE inventory
+ADD COLUMN temp_receipt text;
+
+COMMIT;

@@ -28,4 +28,6 @@ func Routes(r *gin.RouterGroup, depCon container.Container) {
 		"/available-stock",
 		GetAvailableStock,
 	)
+
+	g.POST("/add-item-to-inventory", addItemToInventory)
 }

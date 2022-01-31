@@ -61,6 +61,7 @@ type Inventory struct {
 	Uuid            string          `json:"uuid"`
 	ReservedForUser sql.NullInt32   `json:"reserved_for_user"`
 	Delivered       DeliveredStatus `json:"delivered"`
+	TempReceipt     sql.NullString  `json:"temp_receipt"`
 }
 
 type ProductInfo struct {

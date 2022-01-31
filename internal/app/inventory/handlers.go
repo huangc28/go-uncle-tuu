@@ -7,6 +7,7 @@ import (
 	"huangc28/go-ios-iap-vendor/internal/apperrors"
 	"huangc28/go-ios-iap-vendor/internal/pkg/requestbinder"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golobby/container/pkg/container"
@@ -130,4 +131,53 @@ func GetAvailableStock(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, TrfAvailableStock(*stock))
+}
+
+type AddItemToInventoryBody struct {
+	// ProdName example: "arktw_diamond_1".
+	ProdID string `json:"prod_id" form:"prod_id" binding:"required"`
+
+	// Receipt receipt string after successful transaction.
+	Receipt         string    `json:"receipt" form:"receipt" binding:"required"`
+	TempReceipt     string    `json:"temp_receipt" form:"temp_receipt" binding:"required"`
+	TransactionID   string    `json:"transaction_id" form:"transaction_id" binding:"required"`
+	TransactionDate time.Time `json:"transaction_date" form:"transaction_date" binding:"required"`
+}
+
+func addItemToInventory(c *gin.Context) {
+	body := AddItemToInventoryBody{}
+
+	if err := requestbinder.Bind(c, &body); err != nil {
+		c.JSON(
+			http.StatusBadRequest,
+			apperrors.NewErr(
+				apperrors.FailedToBindAPIBody,
+				err.Error(),
+			),
+		)
+
+		return
+	}
+
+	// Add game item to inventory.
+	dao := NewInventoryDAO(db.GetDB())
+	if err := dao.AddItemToInventory(GameItem{
+		ProdID:          body.ProdID,
+		Receipt:         body.Receipt,
+		TempReceipt:     body.TempReceipt,
+		TransactionID:   body.TransactionID,
+		TransactionDate: body.TransactionDate,
+	}); err != nil {
+		c.AbortWithError(
+			http.StatusInternalServerError,
+			apperrors.NewErr(
+				apperrors.FailedToAddItemToInventory,
+				err.Error(),
+			),
+		)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, struct{}{})
 }
