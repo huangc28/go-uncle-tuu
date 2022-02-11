@@ -1,10 +1,17 @@
 package importer
 
 import (
+	"fmt"
+	"huangc28/go-ios-iap-vendor/config"
 	"huangc28/go-ios-iap-vendor/db"
 	"huangc28/go-ios-iap-vendor/internal/apperrors"
 	"huangc28/go-ios-iap-vendor/internal/pkg/requestbinder"
+	"log"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -51,4 +58,49 @@ func GetPurchasedRecordsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, struct {
 		Data []TrfPurchaseRecord `json:"data"`
 	}{trfRecs})
+}
+
+func fileNameWithoutExtension(fileName string) string {
+	if pos := strings.LastIndexByte(fileName, '.'); pos != -1 {
+		return fileName[:pos]
+	}
+	return fileName
+}
+
+func UploadFailedList(c *gin.Context) {
+	// check if directory exists, if not make a directory.
+	dirPath := filepath.Join(
+		config.GetProjRootPath(),
+		config.GetAppConf().ImportFailedFileDirPath,
+	)
+
+	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
+		c.AbortWithError(
+			http.StatusInternalServerError,
+			apperrors.NewErr(
+				apperrors.FailedToCreateImportFailedFileDir,
+				err.Error(),
+			),
+		)
+
+		return
+	}
+
+	file, _ := c.FormFile("filename")
+
+	log.Printf("file1 %v", file)
+	dstName := filepath.Join(
+		dirPath,
+		fmt.Sprintf(
+			"%s_%d%s",
+			fileNameWithoutExtension(file.Filename),
+			time.Now().Unix(),
+			filepath.Ext(file.Filename),
+		),
+	)
+
+	// Upload the file to specific dst.
+	c.SaveUploadedFile(file, dstName)
+
+	c.JSON(http.StatusOK, struct{}{})
 }

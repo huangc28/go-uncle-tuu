@@ -6,6 +6,7 @@ import (
 	"huangc28/go-ios-iap-vendor/internal/app/contracts"
 	"huangc28/go-ios-iap-vendor/internal/apperrors"
 	"huangc28/go-ios-iap-vendor/internal/pkg/requestbinder"
+	"log"
 	"net/http"
 	"time"
 
@@ -54,7 +55,7 @@ func GetReservedStock(c *gin.Context, depCon container.Container) {
 
 	invDAO := NewInventoryDAO(db.GetDB())
 
-	// Only white listed user can access to all products even reserved products.
+	// TODO: Only white listed user can access to all products even reserved products.
 	reservedStockInfo, err := invDAO.GetUserReservedStockByUUID(body.ProdID, int(user.ID))
 
 	if err == sql.ErrNoRows {
@@ -88,6 +89,7 @@ type GetAvailableStockBody struct {
 }
 
 func GetAvailableStock(c *gin.Context) {
+
 	body := GetAvailableStockBody{}
 
 	if err := requestbinder.Bind(c, &body); err != nil {
@@ -101,6 +103,8 @@ func GetAvailableStock(c *gin.Context) {
 
 		return
 	}
+
+	log.Printf("prod_id %v", body.ProdID)
 
 	dao := NewInventoryDAO(db.GetDB())
 
@@ -159,6 +163,9 @@ func addItemToInventory(c *gin.Context) {
 		return
 	}
 
+	log.Printf("body %v", body)
+
+	// TODO check if prod ID exists before importing to inventory.
 	// Add game item to inventory.
 	dao := NewInventoryDAO(db.GetDB())
 	if err := dao.AddItemToInventory(GameItem{

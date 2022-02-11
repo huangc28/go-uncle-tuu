@@ -18,16 +18,15 @@ func Routes(r *gin.RouterGroup, depCon container.Container) {
 		),
 	)
 
+	// TODO: move this API to exporter
 	// Check if there are enough quantity of the stock that he/she
 	// wants to export.
 	g.GET("/reserved-stock", func(c *gin.Context) {
 		GetReservedStock(c, depCon)
 	})
 
-	g.GET(
-		"/available-stock",
-		GetAvailableStock,
-	)
+	g.GET("/available-stock", GetAvailableStock)
 
+	// TODO: move this API to importer
 	g.POST("/add-item-to-inventory", addItemToInventory)
 }

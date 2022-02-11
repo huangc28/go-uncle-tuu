@@ -20,6 +20,8 @@ type AppConf struct {
 	DBPassword string `mapstructure:"DB_PASSWORD"`
 	DBDbname   string `mapstructure:"DB_NAME"`
 	DBTimeZone string `mapstructure:"DB_TIMEZONE"`
+
+	ImportFailedFileDirPath string `mapstructure:"IMPORT_FAILED_FILE_DIR_PATH"`
 }
 
 var appConf AppConf
