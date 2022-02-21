@@ -19,7 +19,7 @@ func init() {
 }
 
 func main() {
-	username := "admin"
+	username := "admin1"
 	password := "1234"
 
 	sid, err := shortid.Generate()

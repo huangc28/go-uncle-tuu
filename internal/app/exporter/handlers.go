@@ -4,6 +4,7 @@ import (
 	"huangc28/go-ios-iap-vendor/internal/app/contracts"
 	"huangc28/go-ios-iap-vendor/internal/apperrors"
 	"huangc28/go-ios-iap-vendor/internal/pkg/requestbinder"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -47,6 +48,8 @@ func ReportReceived(c *gin.Context, depCon container.Container) {
 
 		return
 	}
+
+	log.Printf("stock uuid, user id %v %v", body.UUID, user.ID)
 
 	// Makesure the stock is reserved for that user.
 	isReserved, err := inventoryDao.IsStockReservedForUser(body.UUID, user.ID)

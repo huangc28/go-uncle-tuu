@@ -24,12 +24,14 @@ func TrfAvailableStock(m models.Inventory) interface{} {
 		TransactionID   string `json:"transaction_id"`
 		TransactionTime string `json:"transaction_time"`
 		Receipt         string `json:"receipt"`
+		TempReceipt     string `json:"temp_receipt"`
 	}{
 		m.Uuid,
 		int(m.ProdID.Int32),
 		m.TransactionID.String,
 		ct,
 		m.Receipt.String,
+		m.TempReceipt.String,
 	}
 }
 

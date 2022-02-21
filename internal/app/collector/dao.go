@@ -3,6 +3,7 @@ package collector
 import (
 	"huangc28/go-ios-iap-vendor/db"
 	"huangc28/go-ios-iap-vendor/internal/models"
+	"log"
 )
 
 type ProdInfoDAO struct {
@@ -24,6 +25,7 @@ func NewProdInfoDAO(conn db.Conn) *ProdInfoDAO {
 }
 
 func (dao *ProdInfoDAO) IsProdInfoExists(prodID, bundleID string) (bool, error) {
+	log.Printf("IsProdInfoExists %v %v", prodID, bundleID)
 	query := `
 SELECT EXISTS (
 	SELECT 1
