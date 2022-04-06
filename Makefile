@@ -40,7 +40,7 @@ gen_model:
 # List of systemctl service name to host up worker.
 APP_SERVICE_NAME                    = uncletuu.service
 
-deploy: build
+deploy:
 	ssh -t $(DEPLOY_TARGET) 'cd /root/uncletuu/go-uncle-tuu && \
 		git pull https://$(GITHUB_USER):$(GITHUB_ACCESS_TOKEN)@github.com/huangc28/go-uncle-tuu.git && \
 		make build && \
