@@ -17,5 +17,5 @@ var appErrMap = map[string]string{
 	DuplicatedProductInfo:      "product info has been collected",
 	FailedToCreateProdInfo:     "failed to create product info",
 	FailedToFetchInventoryInfo: "failed to fetch inventory info",
-	NoAvailableProductFound:    "not available stock found",
+	NoAvailableProductFound:    "沒有預留的庫存",
 }
