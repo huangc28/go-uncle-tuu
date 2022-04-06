@@ -62,7 +62,7 @@ GROUP BY
 
 // Find the first available stock in inventory. If no stock available, return no stock error.
 // If we find the first available stock, row lock it first, update available to false, then return the stock info.
-func (dao *InventoryDAO) GetAvailableStock(prodID string) (*models.Inventory, error) {
+func (dao *InventoryDAO) GetAvailableStock(prodID string, userID int64) (*models.Inventory, error) {
 	rowLockQuery := `
 SELECT
 	inventory.*
@@ -73,18 +73,15 @@ WHERE
 	available=true
 AND
 	product_info.prod_id = $1
+AND
+	reserved_for_user = $2
 ORDER BY created_at ASC LIMIT 1 FOR UPDATE OF inventory;
 
 `
 	m := models.Inventory{}
 
-	if err := dao.conn.QueryRowx(rowLockQuery, prodID).StructScan(&m); err != nil {
+	if err := dao.conn.QueryRowx(rowLockQuery, prodID, userID).StructScan(&m); err != nil {
 		return &m, err
-	}
-
-	// If selected stock is not available, let's select another available stock.
-	if !m.Available.Bool {
-		return dao.GetAvailableStock(prodID)
 	}
 
 	// If selected stock is available, update available to 'false'.

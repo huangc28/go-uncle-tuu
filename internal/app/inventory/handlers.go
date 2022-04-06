@@ -88,8 +88,7 @@ type GetAvailableStockBody struct {
 	ProdID string `json:"prod_id" form:"prod_id" binding:"required"`
 }
 
-func GetAvailableStock(c *gin.Context) {
-
+func GetAvailableStock(c *gin.Context, depCon container.Container) {
 	body := GetAvailableStockBody{}
 
 	if err := requestbinder.Bind(c, &body); err != nil {
@@ -104,11 +103,26 @@ func GetAvailableStock(c *gin.Context) {
 		return
 	}
 
-	log.Printf("prod_id %v", body.ProdID)
+	var userDAO contracts.UserDAOer
+	depCon.Make(&userDAO)
+
+	user, err := userDAO.GetUserByUUID(c.GetString("user_uuid"), "id")
+
+	if err != nil {
+		c.AbortWithError(
+			http.StatusInternalServerError,
+			apperrors.NewErr(
+				apperrors.FailedToGetUserByUUID,
+				err.Error(),
+			),
+		)
+
+		return
+	}
 
 	dao := NewInventoryDAO(db.GetDB())
 
-	stock, err := dao.GetAvailableStock(body.ProdID)
+	stock, err := dao.GetAvailableStock(body.ProdID, user.ID)
 
 	if err == sql.ErrNoRows {
 		c.AbortWithError(

@@ -18,14 +18,27 @@ func Routes(r *gin.RouterGroup, depCon container.Container) {
 		),
 	)
 
-	// TODO: move this API to exporter
-	// Check if there are enough quantity of the stock that he/she
-	// wants to export.
-	g.GET("/reserved-stock", func(c *gin.Context) {
-		GetReservedStock(c, depCon)
-	})
+	// Deprecated Not used anywhere in frontend
+	// TODO move this API to exporter
+	// Check if there are enough quantity of the stock that he/she wants to export.
+	g.GET(
+		"/reserved-stock",
+		func(c *gin.Context) {
+			GetReservedStock(c, depCon)
+		},
+	)
 
-	g.GET("/available-stock", GetAvailableStock)
+	// Check if there are any stock that is eligible for exporting to user's game account.
+	// If a reserved stock is found for the user, deliver the stock.
+	g.GET(
+		"/available-stock",
+		middlewares.JWTValidator(middlewares.JwtMiddlewareOptions{
+			Secret: config.GetAppConf().APIJWTSecret,
+		}),
+		func(c *gin.Context) {
+			GetAvailableStock(c, depCon)
+		},
+	)
 
 	// TODO: move this API to importer
 	g.POST("/add-item-to-inventory", addItemToInventory)
