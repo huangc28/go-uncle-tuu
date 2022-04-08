@@ -88,6 +88,7 @@ type ReportUnreceivedBody struct {
 	UUID string `form:"uuid" json:"uuid" binding:"required"`
 }
 
+// TODO lock user exporting permission.
 func ReportUnreceived(c *gin.Context, depCon container.Container) {
 	body := ReportUnreceivedBody{}
 
@@ -128,7 +129,10 @@ func ReportUnreceived(c *gin.Context, depCon container.Container) {
 	if err != nil {
 		c.AbortWithError(
 			http.StatusBadRequest,
-			apperrors.NewErr(apperrors.FailedToCheckStockReservedForUser),
+			apperrors.NewErr(
+				apperrors.FailedToCheckStockReservedForUser,
+				err.Error(),
+			),
 		)
 
 		return
@@ -137,17 +141,29 @@ func ReportUnreceived(c *gin.Context, depCon container.Container) {
 	if !isReserved {
 		c.AbortWithError(
 			http.StatusBadRequest,
-			apperrors.NewErr(apperrors.StockIsNotReservedForTheUser),
+			apperrors.NewErr(
+				apperrors.StockIsNotReservedForTheUser,
+				err.Error(),
+			),
 		)
 
 		return
 	}
 
 	if err := inventoryDao.MarkStockAsNotDelivered(body.UUID); err != nil {
-
 		c.AbortWithError(
 			http.StatusInternalServerError,
 			apperrors.NewErr(apperrors.FailedToMarkStockAsNotDeliver),
+		)
+
+		return
+	}
+
+	// Disable exporting permission of this account.
+	if err = userDao.DisableExport(user.ID); err != nil {
+		c.AbortWithError(
+			http.StatusInternalServerError,
+			apperrors.NewErr(apperrors.FailedToDisableExport),
 		)
 
 		return

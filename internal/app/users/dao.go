@@ -45,3 +45,17 @@ WHERE uuid = $1;
 
 	return &user, nil
 }
+
+func (dao *UserDAO) DisableExport(userID int64) error {
+	query := `
+UPDATE
+	users
+SET
+	can_be_exported = false
+WHERE
+	id = $1;
+`
+	_, err := dao.conn.Exec(query, userID)
+
+	return err
+}

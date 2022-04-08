@@ -74,12 +74,13 @@ type ProductInfo struct {
 }
 
 type User struct {
-	ID        int64        `json:"id"`
-	Username  string       `json:"username"`
-	Password  string       `json:"password"`
-	Role      Roles        `json:"role"`
-	CreatedAt time.Time    `json:"created_at"`
-	UpdatedAt sql.NullTime `json:"updated_at"`
-	DeletedAt sql.NullTime `json:"deleted_at"`
-	Uuid      string       `json:"uuid"`
+	ID            int64        `json:"id"`
+	Username      string       `json:"username"`
+	Password      string       `json:"password"`
+	Role          Roles        `json:"role"`
+	CreatedAt     time.Time    `json:"created_at"`
+	UpdatedAt     sql.NullTime `json:"updated_at"`
+	DeletedAt     sql.NullTime `json:"deleted_at"`
+	Uuid          string       `json:"uuid"`
+	CanBeExported sql.NullBool `json:"can_be_exported"`
 }
