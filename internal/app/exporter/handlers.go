@@ -15,7 +15,6 @@ type ReportReceivedBody struct {
 	UUID string `form:"uuid" json:"uuid" binding:"required"`
 }
 
-// @TODO check if uuid exists
 func ReportReceived(c *gin.Context, depCon container.Container) {
 	body := &ReportReceivedBody{}
 	if err := requestbinder.Bind(c, &body); err != nil {
