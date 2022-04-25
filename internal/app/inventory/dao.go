@@ -178,3 +178,7 @@ INSERT INTO inventory (
 
 	return nil
 }
+
+func (dao *InventoryDAO) BatchAddItemsToInventory([]*GameItem) error {
+	return nil
+}

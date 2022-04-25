@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	jwt, err := jwtactor.CreateToken("w1YuW907g", "fukyoubitch")
+	jwt, err := jwtactor.CreateToken("t-aOdsb7g", "fukyoubitch")
 
 	if err != nil {
 		log.Fatal(err)
