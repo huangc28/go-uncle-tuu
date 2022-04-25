@@ -6,7 +6,6 @@ import (
 	"huangc28/go-ios-iap-vendor/internal/app/contracts"
 	"huangc28/go-ios-iap-vendor/internal/apperrors"
 	"huangc28/go-ios-iap-vendor/internal/pkg/requestbinder"
-	"log"
 	"net/http"
 	"time"
 
@@ -177,11 +176,9 @@ func addItemToInventory(c *gin.Context) {
 		return
 	}
 
-	log.Printf("body %v", body)
-
-	// TODO check if prod ID exists before importing to inventory.
-	// Add game item to inventory.
 	dao := NewInventoryDAO(db.GetDB())
+
+	// Add game item to inventory.
 	if err := dao.AddItemToInventory(GameItem{
 		ProdID:          body.ProdID,
 		Receipt:         body.Receipt,

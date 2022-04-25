@@ -159,9 +159,8 @@ type GameItem struct {
 }
 
 // https://stackoverflow.com/questions/51002790/locking-a-specific-row-in-postgres/52557413
-
+// AddItemToInventory add stock to inventory IF the transaction id of the stock isn't already exists in the inventory.
 func (dao *InventoryDAO) AddItemToInventory(item GameItem) error {
-	log.Printf("temp receipt %v", item)
 	query := `
 INSERT INTO inventory (
 	prod_id,
@@ -170,8 +169,9 @@ INSERT INTO inventory (
 	temp_receipt,
 	available,
 	transaction_time
-) SELECT id, $1, $2, $3, TRUE, $4 FROM product_info WHERE prod_id = $5;
+) SELECT id, $1, $2, $3, TRUE, $4 FROM product_info WHERE prod_id = $5 ON CONFLICT (transaction_id) DO NOTHING;
 	`
+
 	if _, err := dao.conn.Exec(query, item.TransactionID, item.Receipt, item.TempReceipt, item.TransactionDate, item.ProdID); err != nil {
 		return err
 	}
