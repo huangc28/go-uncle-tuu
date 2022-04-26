@@ -146,6 +146,14 @@ func main() {
 	}
 
 	inventoryDAO := inventory.NewInventoryDAO(db.GetDB())
+
+	// Select product IDs from "product_info" to form a key-value pair hash like the following:
+	//
+	// {
+	//    arktw_diamond_2: 2
+	//    kgtw.cash.1: 4
+	//    ...
+	// }
 	prodIDIDMap, err := inventoryDAO.GetProdInfoIDProdIDKeyValuePair()
 
 	if err != nil {
@@ -154,19 +162,27 @@ func main() {
 		return
 	}
 
+	// sucessfulImportedFiles stores those files that has been imported to inventory successfully.
+	sucessfulImportedFiles := make([]string, 0)
 	gameItems := make([]*inventory.GameItem, 0)
 
+	var closeAndResetFile = func(f *os.File) {
+		f.Seek(0, 0)
+		f.Close()
+	}
+
 	// Iterate through each failed items file.
+FileLoop:
 	for _, file := range fileInfos {
 		// Read each file content and write data to a struct.
 		// Read content from path and split it by empty line.
-		f, err := os.Open(
-			path.Join(
-				config.GetProjRootPath(),
-				config.GetAppConf().ImportFailedFileDirPath,
-				file.Name(),
-			),
+		filepath := path.Join(
+			config.GetProjRootPath(),
+			config.GetAppConf().ImportFailedFileDirPath,
+			file.Name(),
 		)
+
+		f, err := os.Open(filepath)
 
 		if err != nil {
 			log.Printf("failed to open file %v %v", file.Name(), err)
@@ -177,26 +193,24 @@ func main() {
 		scanner := bufio.NewScanner(f)
 		scanner.Split(SplitByNewLine)
 
-		// Select product IDs from "product_info" to form a key-value pair hash like the following:
-		//
-		// {
-		//    arktw_diamond_2: 2
-		//    kgtw.cash.1: 4
-		//    ...
-		// }
+	ContentLoop:
 		for scanner.Scan() {
 			dataStr := strings.Trim(string(scanner.Bytes()), string([]byte{0xA}))
 
 			r := strings.NewReader(dataStr)
 			var stock Stock
+
+			// If any panic error happened, we continue process the next file. Do not mark this file
+			// as successfully imported.
 			if err := json.NewDecoder(r).Decode(&stock); err != nil {
 				if err == io.EOF {
-					continue
+					continue ContentLoop
 				}
 
-				log.Printf("failed to decode stock to struct for file %v %v", file.Name(), err)
+				log.Printf("failed to decode stock to struct for file, skipping to the next file %v %v", file.Name(), err)
 
-				return
+				closeAndResetFile(f)
+				continue FileLoop
 			}
 
 			json.NewDecoder(r).Decode(&stock)
@@ -204,9 +218,10 @@ func main() {
 			t, err := time.Parse(ISO8601Layout, stock.TransactionDate)
 
 			if err != nil {
-				log.Printf("failed to parse transaction date for file:%v %v", file.Name(), err)
+				log.Printf("failed to parse transaction date for file, skipping to the next file %v %v", file.Name(), err)
 
-				return
+				closeAndResetFile(f)
+				continue FileLoop
 			}
 
 			// Parse transaction_date
@@ -219,16 +234,22 @@ func main() {
 			}
 
 			gameItems = append(gameItems, &gameItem)
-
 		}
 
-		f.Seek(0, 0)
-		f.Close()
+		closeAndResetFile(f)
+		sucessfulImportedFiles = append(sucessfulImportedFiles, filepath)
 	}
 
 	if err := inventoryDAO.BatchAddItemsToInventory(gameItems, prodIDIDMap); err != nil {
 		log.Fatalf("failed to add items to inventory %v", err)
 	}
 
-	log.Println("done importing game items")
+	log.Println("done importing game items, removing files...")
+	for _, successfulImportedFile := range sucessfulImportedFiles {
+		if err := os.Remove(successfulImportedFile); err != nil {
+			log.Printf("failed to remove file %v, %v", successfulImportedFile, err)
+
+			continue
+		}
+	}
 }
