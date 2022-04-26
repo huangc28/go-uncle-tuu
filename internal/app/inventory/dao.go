@@ -221,8 +221,6 @@ func (dao *InventoryDAO) BatchAddItemsToInventory(gameItems []*GameItem, prodIDI
 	vals := []interface{}{}
 
 	for _, gameItem := range gameItems {
-
-		log.Printf("DEBUG gameItem.ProdID %v", gameItem.ProdID)
 		id, prodIDExists := prodIDIDMap[gameItem.ProdID]
 
 		if !prodIDExists {
