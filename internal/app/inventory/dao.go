@@ -2,10 +2,12 @@ package inventory
 
 import (
 	"errors"
+	"fmt"
 	"huangc28/go-ios-iap-vendor/db"
 	"huangc28/go-ios-iap-vendor/internal/app/contracts"
 	"huangc28/go-ios-iap-vendor/internal/app/models"
 	"log"
+	"strings"
 	"time"
 
 	cintrnal "github.com/golobby/container/pkg/container"
@@ -179,6 +181,88 @@ INSERT INTO inventory (
 	return nil
 }
 
-func (dao *InventoryDAO) BatchAddItemsToInventory([]*GameItem) error {
+type ProdInfoIDProdIDKeyValuePair struct {
+	ID     int    `json:"id"`
+	ProdID string `json:"prod_id"`
+}
+
+func (dao *InventoryDAO) GetProdInfoIDProdIDKeyValuePair() (map[string]int, error) {
+	idProdIDMap := make(map[string]int)
+
+	query := `
+SELECT
+	id,
+	prod_id
+FROM
+	product_info
+	`
+
+	rows, err := dao.conn.Queryx(query)
+
+	if err != nil {
+		return idProdIDMap, err
+	}
+
+	for rows.Next() {
+		o := ProdInfoIDProdIDKeyValuePair{}
+
+		if err := rows.StructScan(&o); err != nil {
+			return idProdIDMap, err
+		}
+
+		idProdIDMap[o.ProdID] = o.ID
+	}
+
+	return idProdIDMap, nil
+}
+
+func (dao *InventoryDAO) BatchAddItemsToInventory(gameItems []*GameItem, prodIDIDMap map[string]int) error {
+	sqlStr := "INSERT INTO inventory(prod_id, receipt, temp_receipt, transaction_id, transaction_time) VALUES "
+	vals := []interface{}{}
+
+	for _, gameItem := range gameItems {
+
+		log.Printf("DEBUG gameItem.ProdID %v", gameItem.ProdID)
+		id, prodIDExists := prodIDIDMap[gameItem.ProdID]
+
+		if !prodIDExists {
+			log.Printf("DEBUG product id: %s does not exist, skipping", gameItem.ProdID)
+
+			continue
+		}
+
+		sqlStr += "(?, ?, ?, ?, ?),"
+		vals = append(
+			vals,
+			id,
+			gameItem.Receipt,
+			gameItem.TempReceipt,
+			gameItem.TransactionID,
+			gameItem.TransactionDate,
+		)
+	}
+
+	if len(gameItems) <= 0 {
+		log.Println("after prod id filtering, there are no game items to import")
+
+		return nil
+	}
+
+	sqlStr = strings.TrimSuffix(sqlStr, ",")
+	pgStr := db.ReplaceSQLPlaceHolderWithPG(sqlStr, "?")
+	pgStr = fmt.Sprintf("%s ON CONFLICT(transaction_id) DO NOTHING", pgStr)
+
+	stmt, err := dao.conn.Prepare(pgStr)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(vals...)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

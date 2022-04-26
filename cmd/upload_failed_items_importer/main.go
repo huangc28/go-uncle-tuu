@@ -7,6 +7,7 @@ import (
 	"huangc28/go-ios-iap-vendor/db"
 	"huangc28/go-ios-iap-vendor/internal/app/deps"
 	"huangc28/go-ios-iap-vendor/internal/app/inventory"
+	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -133,7 +134,10 @@ const (
 	ISO8601Layout = "2006-01-02T15:04:05"
 )
 
-// This worker read upload failed items from import failed files and import them to inventory table.
+// This worker read upload failed items from import failed files, import them to inventory table.
+// TODO
+//  - use go routine to read file content.
+//  - use loggers to instead of simply printing logs on the screen.
 func main() {
 	fileInfos, err := ReadFailedItemDir()
 
@@ -141,61 +145,90 @@ func main() {
 		log.Fatalf("failed to read failed item directory %v", err.Error())
 	}
 
-	log.Printf("DEBUG filename %v", fileInfos[0].Name())
-
-	//for _, file := range fileInfos {
-	// Read each file content and write data to a struct.
-	// Read content from path and split it by empty line.
-	f, err := os.Open(
-		path.Join(
-			config.GetProjRootPath(),
-			config.GetAppConf().ImportFailedFileDirPath,
-			fileInfos[0].Name(),
-		),
-	)
+	inventoryDAO := inventory.NewInventoryDAO(db.GetDB())
+	prodIDIDMap, err := inventoryDAO.GetProdInfoIDProdIDKeyValuePair()
 
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("failed to get prod id to id map %v", prodIDIDMap)
+
+		return
 	}
 
-	defer f.Close()
+	gameItems := make([]*inventory.GameItem, 0)
 
-	stocks := make([]*inventory.GameItem, 0)
-	scanner := bufio.NewScanner(f)
-	scanner.Split(SplitByNewLine)
-
-	for scanner.Scan() {
-		dataStr := strings.TrimPrefix(string(scanner.Bytes()), string([]byte{0xA}))
-		log.Printf("DEBUG scanner dataStr %v", dataStr)
-
-		r := strings.NewReader(dataStr)
-		var stock Stock
-		if err := json.NewDecoder(r).Decode(&stock); err != nil {
-			log.Fatalf("failed to decode stock to struct %v", err)
-		}
-
-		t, err := time.Parse(ISO8601Layout, stock.TransactionDate)
+	// Iterate through each failed items file.
+	for _, file := range fileInfos {
+		// Read each file content and write data to a struct.
+		// Read content from path and split it by empty line.
+		f, err := os.Open(
+			path.Join(
+				config.GetProjRootPath(),
+				config.GetAppConf().ImportFailedFileDirPath,
+				file.Name(),
+			),
+		)
 
 		if err != nil {
-			log.Fatalf("failed to parse transaction date %v", err)
+			log.Printf("failed to open file %v %v", file.Name(), err)
+
+			continue
 		}
 
-		// Parse transaction_date
-		gameItem := inventory.GameItem{
-			ProdID:          stock.ProdID,
-			Receipt:         stock.Receipt,
-			TempReceipt:     stock.TempReceipt,
-			TransactionID:   stock.TransactionID,
-			TransactionDate: t,
+		scanner := bufio.NewScanner(f)
+		scanner.Split(SplitByNewLine)
+
+		// Select product IDs from "product_info" to form a key-value pair hash like the following:
+		//
+		// {
+		//    arktw_diamond_2: 2
+		//    kgtw.cash.1: 4
+		//    ...
+		// }
+		for scanner.Scan() {
+			dataStr := strings.Trim(string(scanner.Bytes()), string([]byte{0xA}))
+
+			r := strings.NewReader(dataStr)
+			var stock Stock
+			if err := json.NewDecoder(r).Decode(&stock); err != nil {
+				if err == io.EOF {
+					continue
+				}
+
+				log.Printf("failed to decode stock to struct for file %v %v", file.Name(), err)
+
+				return
+			}
+
+			json.NewDecoder(r).Decode(&stock)
+
+			t, err := time.Parse(ISO8601Layout, stock.TransactionDate)
+
+			if err != nil {
+				log.Printf("failed to parse transaction date for file:%v %v", file.Name(), err)
+
+				return
+			}
+
+			// Parse transaction_date
+			gameItem := inventory.GameItem{
+				ProdID:          stock.ProdID,
+				Receipt:         stock.Receipt,
+				TempReceipt:     stock.TempReceipt,
+				TransactionID:   stock.TransactionID,
+				TransactionDate: t,
+			}
+
+			gameItems = append(gameItems, &gameItem)
+
 		}
 
-		stocks = append(stocks, &gameItem)
-
+		f.Seek(0, 0)
+		f.Close()
 	}
 
-	inventoryDAO := inventory.NewInventoryDAO(db.GetDB())
-	//inventoryDAO.
-	//}
+	if err := inventoryDAO.BatchAddItemsToInventory(gameItems, prodIDIDMap); err != nil {
+		log.Fatalf("failed to add items to inventory %v", err)
+	}
 
-	//log.Printf("DEBUG stocks %v", stocks)
+	log.Println("done importing game items")
 }
