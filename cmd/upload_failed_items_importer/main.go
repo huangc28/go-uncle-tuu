@@ -241,7 +241,9 @@ FileLoop:
 	}
 
 	if err := inventoryDAO.BatchAddItemsToInventory(gameItems, prodIDIDMap); err != nil {
-		log.Fatalf("failed to add items to inventory %v", err)
+		log.Printf("failed to add items to inventory %v", err)
+
+		return
 	}
 
 	log.Println("done importing game items, removing files...")
