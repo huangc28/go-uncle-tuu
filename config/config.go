@@ -21,6 +21,9 @@ type AppConf struct {
 	DBDbname   string `mapstructure:"DB_NAME"`
 	DBTimeZone string `mapstructure:"DB_TIMEZONE"`
 
+	GCSGoogleServiceAccountName string `mapstructure:"GCS_GOOGLE_SERVICE_ACCOUNT_NAME"`
+	NewProcurementBucketName    string `mapstructure:"NEW_PROCUREMENT_BUCKET_NAME"`
+
 	ImportFailedFileDirPath string `mapstructure:"IMPORT_FAILED_FILE_DIR_PATH"`
 }
 

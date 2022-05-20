@@ -1,19 +1,24 @@
 package importer
 
 import (
+	"context"
 	"fmt"
 	"huangc28/go-ios-iap-vendor/config"
 	"huangc28/go-ios-iap-vendor/db"
 	"huangc28/go-ios-iap-vendor/internal/apperrors"
 	"huangc28/go-ios-iap-vendor/internal/pkg/requestbinder"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"cloud.google.com/go/storage"
 	"github.com/gin-gonic/gin"
+	gcsenhancer "github.com/huangc28/gcs_enhancer"
+	"google.golang.org/api/option"
 )
 
 type GetPurchasedRecordsBody struct {
@@ -103,4 +108,87 @@ func UploadFailedList(c *gin.Context) {
 	c.SaveUploadedFile(file, dstName)
 
 	c.JSON(http.StatusOK, struct{}{})
+}
+
+type ProcurementForm struct {
+	File *multipart.FileHeader `form:"procurement" binding:"required"`
+}
+
+// TODO
+//  - Create a table to log who uploads the procurement sheet, long with import status.
+//  - Implement a worker to import procurement sheet into database.
+func UploadProcurement(c *gin.Context) {
+	form := &ProcurementForm{}
+
+	if err := c.ShouldBind(form); err != nil {
+		c.AbortWithError(
+			http.StatusBadRequest,
+			apperrors.NewErr(
+				apperrors.FailedToBindAPIBody,
+				err.Error(),
+			),
+		)
+
+		return
+	}
+
+	ctx := context.Background()
+	client, err := storage.NewClient(
+		ctx,
+		option.WithCredentialsFile(
+			fmt.Sprintf("%s/%s",
+				config.GetProjRootPath(),
+				config.GetAppConf().GCSGoogleServiceAccountName,
+			),
+		),
+	)
+
+	if err != nil {
+		c.AbortWithError(
+			http.StatusInternalServerError,
+			apperrors.NewErr(
+				apperrors.FailedToInitGoogleStorageClient,
+				err.Error(),
+			),
+		)
+		return
+	}
+
+	f, err := form.File.Open()
+
+	if err != nil {
+		c.AbortWithError(
+			http.StatusInternalServerError,
+			apperrors.NewErr(
+				apperrors.FailedToOpenUploadedFile,
+				err.Error(),
+			),
+		)
+
+		return
+	}
+
+	defer f.Close()
+	enhancer := gcsenhancer.NewGCSEnhancer(client, config.GetAppConf().NewProcurementBucketName)
+	fname, err := enhancer.Upload(
+		ctx,
+		f,
+		gcsenhancer.AppendUnixTimeStampToFilename(form.File.Filename),
+	)
+
+	if err != nil {
+		c.AbortWithError(
+			http.StatusInternalServerError,
+			apperrors.NewErr(
+				apperrors.FailedToUploadFileToGCS,
+				err.Error(),
+			),
+		)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, struct {
+		UploadedFilename string
+	}{fname})
 }

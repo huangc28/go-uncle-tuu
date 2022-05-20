@@ -14,6 +14,7 @@ import (
 )
 
 func StartApp(e *gin.Engine) {
+	e.Use(middlewares.CORSMiddlewares())
 	e.Use(middlewares.ResponseLogger)
 	e.Use(apperrors.HandleError())
 	rv1 := e.Group("/v1")

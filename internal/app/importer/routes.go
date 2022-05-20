@@ -8,4 +8,6 @@ func Routes(r *gin.RouterGroup) {
 	g.GET("/purchased-records", GetPurchasedRecordsHandler)
 
 	g.POST("/upload-failed-list", UploadFailedList)
+
+	g.POST("/upload-procurement", UploadProcurement)
 }
