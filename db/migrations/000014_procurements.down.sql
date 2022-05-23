@@ -1,0 +1,6 @@
+BEGIN;
+
+DROP TABLE IF EXISTS procurements;
+DROP TYPE IF EXISTS import_status;
+
+COMMIT;

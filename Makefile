@@ -21,11 +21,6 @@ run_local_docker:
 		--env-file .env up \
 		-d
 
-MIGRATE_CMD=migrate
-MIGRATE_CREATE_CMD=create
-MIGRATE_UP_CMD=up
-MIGRATE_DOWN_CMD=down
-
 PG_DSN=postgres://$(PG_USER):$(PG_PASSWORD)@$(PG_HOST):$(PG_PORT)/darkpanda?sslmode=disable
 PG_TEST_DSN=postgres://$(TEST_PG_USER):$(TEST_PG_PASSWORD)@$(TEST_PG_HOST):$(TEST_PG_PORT)/darkpanda?sslmode=disable
 

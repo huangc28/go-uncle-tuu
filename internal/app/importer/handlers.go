@@ -170,10 +170,11 @@ func UploadProcurement(c *gin.Context) {
 
 	defer f.Close()
 	enhancer := gcsenhancer.NewGCSEnhancer(client, config.GetAppConf().NewProcurementBucketName)
-	fname, err := enhancer.Upload(
+	uoInfo, err := enhancer.Upload(
 		ctx,
 		f,
 		gcsenhancer.AppendUnixTimeStampToFilename(form.File.Filename),
+		gcsenhancer.UploadOptions{},
 	)
 
 	if err != nil {
@@ -188,7 +189,28 @@ func UploadProcurement(c *gin.Context) {
 		return
 	}
 
+	procDAO := NewProcurementDAO(db.GetDB())
+	procRec, err := procDAO.CreateProcurement(uoInfo.Filename)
+
+	if err != nil {
+		c.AbortWithError(
+			http.StatusInternalServerError,
+			apperrors.NewErr(
+				apperrors.FailedToCreateProcurementRecord,
+				err.Error(),
+			),
+		)
+
+		return
+	}
+
 	c.JSON(http.StatusOK, struct {
 		UploadedFilename string
-	}{fname})
+		ImportStatus     string
+		CreatedAt        time.Time
+	}{
+		uoInfo.Filename,
+		string(procRec.Status),
+		procRec.CreatedAt,
+	})
 }

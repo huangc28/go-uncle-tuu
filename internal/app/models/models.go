@@ -28,6 +28,26 @@ func (e *DeliveredStatus) Scan(src interface{}) error {
 	return nil
 }
 
+type ImportStatus string
+
+const (
+	ImportStatusPending  ImportStatus = "pending"
+	ImportStatusImported ImportStatus = "imported"
+	ImportStatusFailed   ImportStatus = "failed"
+)
+
+func (e *ImportStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ImportStatus(s)
+	case string:
+		*e = ImportStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ImportStatus: %T", src)
+	}
+	return nil
+}
+
 type Roles string
 
 const (
@@ -62,6 +82,16 @@ type Inventory struct {
 	ReservedForUser sql.NullInt32   `json:"reserved_for_user"`
 	Delivered       DeliveredStatus `json:"delivered"`
 	TempReceipt     sql.NullString  `json:"temp_receipt"`
+}
+
+type Procurement struct {
+	ID           int64          `json:"id"`
+	Filename     string         `json:"filename"`
+	Status       ImportStatus   `json:"status"`
+	FailedReason sql.NullString `json:"failed_reason"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	DeletedAt    sql.NullTime   `json:"deleted_at"`
 }
 
 type ProductInfo struct {
