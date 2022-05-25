@@ -2,7 +2,10 @@ package importer
 
 import (
 	"huangc28/go-ios-iap-vendor/db"
+	"huangc28/go-ios-iap-vendor/internal/app/contracts"
 	"huangc28/go-ios-iap-vendor/internal/app/models"
+
+	cinternal "github.com/golobby/container/pkg/container"
 )
 
 type ProcurementDAO struct {
@@ -12,6 +15,16 @@ type ProcurementDAO struct {
 func NewProcurementDAO(conn db.Conn) *ProcurementDAO {
 	return &ProcurementDAO{
 		conn: conn,
+	}
+}
+
+func ProcurementDAOServiceProvider(c cinternal.Container) func() error {
+	return func() error {
+		c.Transient(func() contracts.ProcurementDAOer {
+			return NewProcurementDAO(db.GetDB())
+		})
+
+		return nil
 	}
 }
 
@@ -29,4 +42,37 @@ RETURNING *;
 	}
 
 	return procurement, nil
+}
+
+func (dao *ProcurementDAO) GetPendingProcurements() ([]*models.Procurement, error) {
+	query := `
+SELECT
+	filename,
+	status,
+	failed_reason,
+	created_at
+FROM
+	procurements
+WHERE
+	status=$1;
+`
+
+	rows, err := dao.conn.Queryx(query, models.ImportStatusPending)
+
+	if err != nil {
+		return nil, err
+	}
+
+	procs := make([]*models.Procurement, 0)
+	for rows.Next() {
+		var proc models.Procurement
+
+		if err := rows.StructScan(&proc); err != nil {
+			return nil, err
+		}
+
+		procs = append(procs, &proc)
+	}
+
+	return procs, nil
 }
