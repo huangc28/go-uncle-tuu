@@ -11,10 +11,11 @@ import (
 	"huangc28/go-ios-iap-vendor/internal/app/deps"
 	"huangc28/go-ios-iap-vendor/internal/app/models"
 	"io"
-	"log"
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"cloud.google.com/go/storage"
 	"github.com/jmoiron/sqlx"
@@ -81,6 +82,13 @@ FROM
 // Read all file names that are with `pending` status. Fetch GCS object from google cloud storage into a io.Reader.
 //
 // We will use `excelize` to read column data from this io.Reader.
+
+// TODO
+//   - What if we failed to init reader from GCS object? I think we will continue to read next file.
+//     but record the failed reason in DB for the corresponding file.
+//   - What if parseAndImportProcurementToDB failed? Jot down the filename and the failed reason. continue
+//     parsing the next file.
+
 func init() {
 	config.InitConfig()
 	db.InitDB()
@@ -97,7 +105,15 @@ func main() {
 	procs, err := procDAO.GetPendingProcurements()
 
 	if err != nil {
-		log.Fatalf("failed to get pending procurements %v", err)
+		log.Errorf("failed to get pending procurements %v", err)
+
+		return
+	}
+
+	if len(procs) == 0 {
+		log.Info("no pending procurement")
+
+		return
 	}
 
 	// For each procurement name, create new reader from google cloud storage.
@@ -113,7 +129,9 @@ func main() {
 	)
 
 	if err != nil {
-		log.Fatalf("failed to initialize GCS client %v", err)
+		log.Errorf("failed to initialize GCS client %v", err)
+
+		return
 	}
 
 	// Retrieve `prod_name` and `id` for every item in `product_info`. Structure a prod_name:id map.
@@ -121,17 +139,14 @@ func main() {
 	err = getProdNameIDMap()
 
 	if err != nil {
-		log.Fatalf("failed to retrieve products info %v", err)
+		log.Errorf("failed to retrieve products info %v", err)
+
+		return
 	}
 
 	successImportedProcs := make([]string, 0)
 	failedProcs := make([]*ImportWorkerError, 0)
 
-	// TODO
-	//   - What if we failed to init reader from GCS object? I think we will continue to read next file.
-	//     but record the failed reason in DB for the corresponding file.
-	//   - What if parseAndImportProcurementToDB failed? Jot down the filename and the failed reason. continue
-	//     parsing the next file.
 	for _, proc := range procs {
 		procReader, err := client.
 			Bucket(config.GetAppConf().NewProcurementBucketName).
@@ -144,7 +159,7 @@ func main() {
 
 			failedProcs = append(failedProcs, ime)
 
-			log.Printf("failed to init io.Reader for bucket object %s, error: %v", proc.Filename, err)
+			log.Errorf("failed to init io.Reader for bucket object %s, error: %v", proc.Filename, err)
 
 			continue
 		}
@@ -154,7 +169,7 @@ func main() {
 
 			failedProcs = append(failedProcs, ime)
 
-			log.Printf("failed to parse and import procurement excel %s, error: %v", proc.Filename, err)
+			log.Errorf("failed to parse and import procurement excel %s, error: %v", proc.Filename, err)
 
 			continue
 		}
@@ -163,11 +178,15 @@ func main() {
 	}
 
 	if len(successImportedProcs) > 0 {
-		UpdateSuccessProcurementStatus(successImportedProcs)
+		if err := UpdateSuccessProcurementStatus(successImportedProcs); err != nil {
+			log.Errorf("failed to update status of successfully uploaded procurements %v", err)
+		}
 	}
 
 	if len(failedProcs) > 0 {
-		UpdateFailedProcurementStatus(failedProcs)
+		if err := UpdateFailedProcurementStatus(failedProcs); err != nil {
+			log.Errorf("failed to update status of failed procurements %v", err)
+		}
 	}
 
 }
@@ -201,8 +220,6 @@ FROM (
 ) AS c(filename_v, status_v, failed_reason_v)
 where t.filename = c.filename_v;
 `, statement)
-
-	log.Printf("failed sql %v", query)
 
 	if _, err := db.GetDB().Exec(query); err != nil {
 		return err
@@ -309,8 +326,6 @@ func parseAndImportProcurementToDB(procReader io.Reader) error {
 	}
 
 	if err := ImportInventoriesToDB(invs); err != nil {
-		log.Printf("ImportInventoriesToDB err %v", err)
-
 		return err
 	}
 
