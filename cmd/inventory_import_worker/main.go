@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"huangc28/go-ios-iap-vendor/config"
 	"huangc28/go-ios-iap-vendor/db"
@@ -11,10 +10,14 @@ import (
 	"huangc28/go-ios-iap-vendor/internal/app/deps"
 	"huangc28/go-ios-iap-vendor/internal/app/models"
 	"io"
+	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
+	"github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 
 	"cloud.google.com/go/storage"
@@ -24,9 +27,13 @@ import (
 )
 
 const (
-	TitleSigatureNotFound           = "9900001"
-	GameItemInfoHasNotBeenCollected = "9900002"
-	FailedToParseTransactionTime    = "9900003"
+	TitleSigatureNotFound                 = "9900001"
+	GameItemInfoHasNotBeenCollected       = "9900002"
+	FailedToParseTransactionTime          = "9900003"
+	FailedToGetSheet                      = "9900004"
+	FailedToInitGCSReader                 = "9900005"
+	FailedToImportDueToDuplicateInventory = "9900006"
+	FailedToImportInventory               = "9900007"
 )
 
 type ImportWorkerError struct {
@@ -98,6 +105,39 @@ func init() {
 }
 
 func main() {
+	ticker := time.NewTicker(10 * time.Second)
+	quit := make(chan struct{})
+	ctx := context.Background()
+
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				StartImporting(ctx)
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+
+		}
+	}()
+
+	// Listen to system signal to stop the ticker.
+	systemQuit := make(chan os.Signal)
+	signal.Notify(systemQuit, syscall.SIGINT, syscall.SIGTERM)
+	<-systemQuit
+
+	log.Info("graceful shutdown...")
+
+	// Close worker
+	close(quit)
+
+	log.Info("shutdown complete...")
+
+}
+
+func StartImporting(ctx context.Context) {
+
 	// Fetch all `pending` procurement
 	var procDAO contracts.ProcurementDAOer
 	deps.Get().Container.Make(&procDAO)
@@ -117,7 +157,6 @@ func main() {
 	}
 
 	// For each procurement name, create new reader from google cloud storage.
-	ctx := context.Background()
 	client, err := storage.NewClient(
 		ctx,
 		option.WithCredentialsFile(
@@ -153,9 +192,11 @@ func main() {
 			Object(proc.Filename).
 			NewReader(ctx)
 
-		var ime *ImportWorkerError
-		if err != nil && errors.As(err, &ime) {
-			ime.ProblematicFile = proc.Filename
+		if err != nil {
+			ime := &ImportWorkerError{
+				Code:            FailedToInitGCSReader,
+				ProblematicFile: proc.Filename,
+			}
 
 			failedProcs = append(failedProcs, ime)
 
@@ -164,7 +205,8 @@ func main() {
 			continue
 		}
 
-		if err := parseAndImportProcurementToDB(procReader); err != nil && errors.As(err, &ime) {
+		if err := parseAndImportProcurementToDB(procReader); err != nil {
+			ime := err.(*ImportWorkerError)
 			ime.ProblematicFile = proc.Filename
 
 			failedProcs = append(failedProcs, ime)
@@ -175,6 +217,7 @@ func main() {
 		}
 
 		successImportedProcs = append(successImportedProcs, proc.Filename)
+		log.Infof("done importing file %s", proc.Filename)
 	}
 
 	if len(successImportedProcs) > 0 {
@@ -303,7 +346,10 @@ func parseAndImportProcurementToDB(procReader io.Reader) error {
 	rows, err := f.GetRows("Sheet1")
 
 	if err != nil {
-		return errors.New(fmt.Sprintf("failed to get rows of %s, error: %s", "Sheet1", err.Error()))
+		return &ImportWorkerError{
+			Message: fmt.Sprintf("failed to get sheet: %s, error: %s", "Sheet1", err.Error()),
+			Code:    FailedToGetSheet,
+		}
 	}
 
 	titleRow := rows[0]
@@ -325,14 +371,14 @@ func parseAndImportProcurementToDB(procReader io.Reader) error {
 		return err
 	}
 
-	if err := ImportInventoriesToDB(invs); err != nil {
+	if err := importInventoriesToDB(invs); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func ImportInventoriesToDB(invs []*models.Inventory) error {
+func importInventoriesToDB(invs []*models.Inventory) error {
 	query := `
 INSERT INTO inventory (prod_id, transaction_id, receipt, temp_receipt, transaction_time)
 VALUES (:prod_id, :transaction_id, :receipt, :temp_receipt, :transaction_time)
@@ -342,7 +388,19 @@ VALUES (:prod_id, :transaction_id, :receipt, :temp_receipt, :transaction_time)
 		query,
 		invs,
 	); err != nil {
-		return err
+		pqErr := err.(*pq.Error)
+
+		log.Printf("DEBUG 1 %v", pqErr.Code)
+		if pqErr.Code == "23505" {
+			return &ImportWorkerError{
+				Code:    FailedToImportDueToDuplicateInventory,
+				Message: fmt.Sprintf("failed to import due to duplicated stock"),
+			}
+		}
+
+		return &ImportWorkerError{
+			Code: FailedToImportInventory,
+		}
 	}
 
 	return nil
