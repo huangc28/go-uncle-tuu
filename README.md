@@ -19,4 +19,5 @@ The worker will change the file status to failed if file data failed to import t
 # TODOs
 
 - [x] auth middleware to validate jwt token.
-- [] reserve available stock for user.
+- [x] reserve available stock for user.
+- [] move 'imported' inventory to another bucket.
