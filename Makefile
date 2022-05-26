@@ -32,7 +32,7 @@ gen_model:
 
 # Build & Deploy
 
-# List of systemctl service name to host up worker.
+# List of systemctl service name to host up app & worker.
 APP_SERVICE_NAME                    = uncletuu.service
 
 deploy:
@@ -45,5 +45,9 @@ deploy:
 build:
 	echo 'building production binary...'
 	cd $(CURRENT_DIR)/cmd/app && GOOS=linux GOARCH=amd64 go build -o ../../bin/uncletuu_be -v .
+
+build_inventory_import_worker:
+	echo 'building inventory import worker'
+	cd $(CURRENT_DIR)/cmd/inventory_import_worker && GOOS=linux GOARCH=amd64 go build -o ../../bin/inventory_importer_worker -v .
 
 .PHONY: build
