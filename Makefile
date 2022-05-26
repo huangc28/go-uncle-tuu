@@ -34,15 +34,18 @@ gen_model:
 
 # List of systemctl service name to host up app & worker.
 APP_SERVICE_NAME                    = uncletuu.service
+INVENTORY_IMPORTER_SERVICE_NAME     = uncletuu_inventory_importer.service
 
 deploy:
 	ssh -t $(DEPLOY_TARGET) 'cd /root/uncletuu/go-uncle-tuu && \
 		git pull https://$(GITHUB_USER):$(GITHUB_ACCESS_TOKEN)@github.com/huangc28/go-uncle-tuu.git && \
 		make build && \
 		sudo systemctl stop $(APP_SERVICE_NAME) && \
-		sudo systemctl start $(APP_SERVICE_NAME)'
+		sudo systemctl start $(APP_SERVICE_NAME) && \
+		sudo systemctl stop $(INVENTORY_IMPORTER_SERVICE_NAME) && \
+		sudo systemctl start $(INVENTORY_IMPORTER_SERVICE_NAME)'
 
-build:
+build: build_inventory_import_worker
 	echo 'building production binary...'
 	cd $(CURRENT_DIR)/cmd/app && GOOS=linux GOARCH=amd64 go build -o ../../bin/uncletuu_be -v .
 
