@@ -11,11 +11,13 @@ import (
 	"huangc28/go-ios-iap-vendor/internal/apperrors"
 	"huangc28/go-ios-iap-vendor/internal/middlewares"
 
+	"github.com/gin-contrib/cors"
+
 	"github.com/gin-gonic/gin"
 )
 
 func StartApp(e *gin.Engine) {
-	e.Use(middlewares.CORSMiddlewares())
+	e.Use(cors.Default())
 	e.Use(middlewares.ResponseLogger)
 	e.Use(apperrors.HandleError())
 	rv1 := e.Group("/v1")
