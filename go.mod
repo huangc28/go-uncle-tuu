@@ -18,8 +18,6 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.4.0 // indirect
 	github.com/huangc28/gcs_enhancer v0.0.2-0.20220523051120-8b2adb787f41
-	github.com/lithammer/fuzzysearch v1.1.5 // indirect
-	github.com/sahilm/fuzzy v0.1.0 // indirect
 	github.com/teris-io/shortid v0.0.0-20201117134242-e59966efd125
 	github.com/xuri/excelize/v2 v2.6.0
 	golang.org/x/crypto v0.0.0-20220408190544-5352b0902921

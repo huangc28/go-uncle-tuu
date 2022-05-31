@@ -141,3 +141,18 @@ CREATE TABLE IF NOT EXISTS procurements (
 );
 
 COMMIT;
+BEGIN;
+
+CREATE TABLE IF NOT EXISTS  games (
+	id BIGSERIAL PRIMARY KEY,
+	game_bundle_id TEXT NOT NULL,
+	readable_name TEXT NOT NULL
+);
+
+COMMIT;
+BEGIN;
+
+ALTER TABLE games
+ADD COLUMN supported BOOLEAN DEFAULT false;
+
+COMMIT;

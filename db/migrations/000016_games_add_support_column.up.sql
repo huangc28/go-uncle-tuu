@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE games
+ADD COLUMN supported BOOLEAN DEFAULT false;
+
+COMMIT;

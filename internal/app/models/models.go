@@ -68,6 +68,13 @@ func (e *Roles) Scan(src interface{}) error {
 	return nil
 }
 
+type Game struct {
+	ID           int64        `json:"id"`
+	GameBundleID string       `json:"game_bundle_id"`
+	ReadableName string       `json:"readable_name"`
+	Supported    sql.NullBool `json:"supported"`
+}
+
 type Inventory struct {
 	ID              int64           `json:"id"`
 	ProdID          sql.NullInt32   `json:"prod_id"`
