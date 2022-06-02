@@ -59,3 +59,21 @@ WHERE
 
 	return err
 }
+
+func (dao *UserDAO) GetUserByUsername(username string, fields ...string) (*models.User, error) {
+
+	baseQuery := `
+SELECT %s
+FROM users
+WHERE username = $1;
+	`
+	query := fmt.Sprintf(baseQuery, db.ComposeFieldsSQLString(fields...))
+
+	var user models.User
+
+	if err := dao.conn.QueryRowx(query, username).StructScan(&user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}

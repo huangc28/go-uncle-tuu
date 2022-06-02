@@ -1,8 +1,11 @@
 package apperrors
 
 const (
-	FailedToGetReservedStock = "4000001"
-	NoReservedStockAvailable = "4000002"
+	FailedToGetReservedStock             = "4000001"
+	NoReservedStockAvailable             = "4000002"
+	FailedToGetAvailableStocksForProdIDs = "4000003"
+	NotEnoughStocks                      = "4000004"
+	FailedToAssignStocksToUser           = "4000005"
 )
 
 var inventoryErrMap = map[string]string{

@@ -389,8 +389,6 @@ VALUES (:prod_id, :transaction_id, :receipt, :temp_receipt, :transaction_time)
 		invs,
 	); err != nil {
 		pqErr := err.(*pq.Error)
-
-		log.Printf("DEBUG 1 %v", pqErr.Code)
 		if pqErr.Code == "23505" {
 			return &ImportWorkerError{
 				Code:    FailedToImportDueToDuplicateInventory,

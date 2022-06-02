@@ -11,11 +11,6 @@ import (
 func Routes(r *gin.RouterGroup, depCon container.Container) {
 	g := r.Group(
 		"/inventory",
-		middlewares.JWTValidator(
-			middlewares.JwtMiddlewareOptions{
-				Secret: config.GetAppConf().APIJWTSecret,
-			},
-		),
 	)
 
 	// Deprecated Not used anywhere in frontend
@@ -23,6 +18,11 @@ func Routes(r *gin.RouterGroup, depCon container.Container) {
 	// Check if there are enough quantity of the stock that he/she wants to export.
 	g.GET(
 		"/reserved-stock",
+		middlewares.JWTValidator(
+			middlewares.JwtMiddlewareOptions{
+				Secret: config.GetAppConf().APIJWTSecret,
+			},
+		),
 		func(c *gin.Context) {
 			GetReservedStock(c, depCon)
 		},
@@ -42,4 +42,8 @@ func Routes(r *gin.RouterGroup, depCon container.Container) {
 
 	// TODO: move this API to importer
 	g.POST("/add-item-to-inventory", addItemToInventory)
+
+	g.POST("/assign-stocks", func(c *gin.Context) {
+		assignStocks(c, depCon)
+	})
 }

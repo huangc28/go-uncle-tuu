@@ -11,6 +11,7 @@ import (
 	"time"
 
 	cintrnal "github.com/golobby/container/pkg/container"
+	"github.com/jmoiron/sqlx"
 )
 
 type InventoryDAO struct {
@@ -259,6 +260,72 @@ func (dao *InventoryDAO) BatchAddItemsToInventory(gameItems []*GameItem, prodIDI
 	_, err = stmt.Exec(vals...)
 
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type AvailableStockInfo struct {
+	ProdID          string    `json:"prod_id"`
+	UUID            string    `json:"uuid"`
+	TransactionTime time.Time `json:"transaction_time"`
+}
+
+func (dao *InventoryDAO) GetAvailableStocksForProdIDs(gameIDs []string) ([]*AvailableStockInfo, error) {
+	query, args, err := sqlx.In(
+		`
+SELECT
+	product_info.prod_id,
+	inventory.uuid,
+	inventory.transaction_time
+FROM product_info
+INNER JOIN inventory ON product_info.id = inventory.prod_id
+WHERE product_info.prod_id IN (?)
+AND inventory.available = TRUE
+AND reserved_for_user IS NULL
+ORDER BY transaction_time ASC;
+	`, gameIDs)
+
+	if err != nil {
+		return nil, err
+	}
+
+	query = db.GetDB().Rebind(query)
+
+	rows, err := db.GetDB().Queryx(query, args...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	prods := make([]*AvailableStockInfo, 0)
+
+	for rows.Next() {
+		var prod AvailableStockInfo
+		if err := rows.StructScan(&prod); err != nil {
+			return nil, err
+		}
+		prods = append(prods, &prod)
+	}
+
+	return prods, nil
+}
+
+func (dao *InventoryDAO) AssignStockToUser(assigneeID int, prodUUIDs []string) error {
+	query, args, err := sqlx.In(`
+UPDATE inventory
+SET reserved_for_user=?
+WHERE uuid IN(?)
+`, assigneeID, prodUUIDs)
+
+	if err != nil {
+		return err
+	}
+
+	query = db.GetDB().Rebind(query)
+
+	if _, err := db.GetDB().Exec(query, args...); err != nil {
 		return err
 	}
 
