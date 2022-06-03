@@ -7,6 +7,7 @@ const (
 	FailedToOpenUploadedFile          = "3000004"
 	FailedToUploadFileToGCS           = "3000005"
 	FailedToCreateProcurementRecord   = "3000006"
+	FailedToGetProcurements           = "3000007"
 )
 
 var importerErrMap = map[string]string{}

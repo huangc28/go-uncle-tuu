@@ -222,7 +222,7 @@ func assignStocks(c *gin.Context, depCon container.Container) {
 
 	if err := requestbinder.Bind(c, &stockParams); err != nil {
 		c.AbortWithError(
-			http.StatusInternalServerError,
+			http.StatusBadRequest,
 			apperrors.NewErr(
 				apperrors.FailedToBindAPIBody,
 				err.Error(),

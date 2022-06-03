@@ -29,7 +29,7 @@ func StartApp(e *gin.Engine) {
 
 	auth.Routes(rv1)
 
-	importer.Routes(rv1)
+	importer.Routes(rv1, deps.Get().Container)
 
 	inventory.Routes(rv1, deps.Get().Container)
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"huangc28/go-ios-iap-vendor/config"
 	"huangc28/go-ios-iap-vendor/db"
+	"huangc28/go-ios-iap-vendor/internal/app/contracts"
 	"huangc28/go-ios-iap-vendor/internal/apperrors"
 	"huangc28/go-ios-iap-vendor/internal/pkg/requestbinder"
 	"log"
@@ -17,6 +18,7 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/gin-gonic/gin"
+	"github.com/golobby/container/pkg/container"
 	gcsenhancer "github.com/huangc28/gcs_enhancer"
 	"google.golang.org/api/option"
 )
@@ -213,4 +215,25 @@ func UploadProcurement(c *gin.Context) {
 		string(procRec.Status),
 		procRec.CreatedAt,
 	})
+}
+
+func GetProcurements(c *gin.Context, depCon container.Container) {
+	var procDAO contracts.ProcurementDAOer
+	depCon.Make(&procDAO)
+
+	procs, err := procDAO.GetProcurements()
+
+	if err != nil {
+		c.AbortWithError(
+			http.StatusInternalServerError,
+			apperrors.NewErr(
+				apperrors.FailedToGetProcurements,
+				err.Error(),
+			),
+		)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, TrfProcurements(procs))
 }

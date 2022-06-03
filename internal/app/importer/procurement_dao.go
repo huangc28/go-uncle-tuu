@@ -76,3 +76,34 @@ WHERE
 
 	return procs, nil
 }
+
+func (dao *ProcurementDAO) GetProcurements() ([]*models.Procurement, error) {
+	query := `
+SELECT
+	filename,
+	status,
+	failed_reason,
+	created_at
+FROM
+	procurements
+`
+
+	rows, err := dao.conn.Queryx(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	procs := make([]*models.Procurement, 0)
+	for rows.Next() {
+		var proc models.Procurement
+
+		if err := rows.StructScan(&proc); err != nil {
+			return nil, err
+		}
+
+		procs = append(procs, &proc)
+	}
+
+	return procs, nil
+}

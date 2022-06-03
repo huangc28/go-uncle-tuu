@@ -28,3 +28,30 @@ func TtfPurchaseRecords(ms []models.PurchaseRecord) []TrfPurchaseRecord {
 
 	return trfms
 }
+
+type TrfmedProcurement struct {
+	Filename     string    `json:"filename"`
+	Status       string    `json:"status"`
+	FailedReason *string   `json:"failed_reason"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+func TrfProcurements(ps []*models.Procurement) []TrfmedProcurement {
+	trfedps := make([]TrfmedProcurement, 0)
+
+	for _, p := range ps {
+		trfmp := TrfmedProcurement{
+			Filename:  p.Filename,
+			Status:    string(p.Status),
+			CreatedAt: p.CreatedAt,
+		}
+
+		if p.FailedReason.Valid {
+			trfmp.FailedReason = &p.FailedReason.String
+		}
+
+		trfedps = append(trfedps, trfmp)
+	}
+
+	return trfedps
+}
