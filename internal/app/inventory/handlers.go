@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golobby/container/pkg/container"
+	"github.com/jmoiron/sqlx"
 )
 
 type GetReservedStockBody struct {
@@ -283,21 +284,50 @@ func assignStocks(c *gin.Context, depCon container.Container) {
 		return
 	}
 
-	// Start assigning stock to user.
-	avaiStockUUIDs := make([]string, len(avaiStocks))
-	for _, avaiStock := range avaiStocks {
-		avaiStockUUIDs = append(avaiStockUUIDs, avaiStock.UUID)
-	}
+	txResp := db.TransactWithFormatStruct(db.GetDB(), func(tx *sqlx.Tx) db.FormatResp {
 
-	if err := invDAO.AssignStockToUser(int(assignee.ID), avaiStockUUIDs); err != nil {
+		// Create stock assignment
+		stockAssignmentDAO := NewStockAssignmentDAO(tx)
+		sa, err := stockAssignmentDAO.CreateAssignment()
+
+		if err != nil {
+			return db.FormatResp{
+				HttpStatusCode: http.StatusInternalServerError,
+				Err:            err,
+				ErrCode:        apperrors.FailedToCreateStockAssignment,
+			}
+		}
+
+		invDAO.SetConn(tx)
+
+		// Start assigning stock to user.
+		avaiStockUUIDs := make([]string, len(avaiStocks))
+		for _, avaiStock := range avaiStocks {
+			avaiStockUUIDs = append(avaiStockUUIDs, avaiStock.UUID)
+		}
+
+		if err := invDAO.AssignStockToUser(int(assignee.ID), int(sa.ID), avaiStockUUIDs); err != nil {
+			return db.FormatResp{
+				Err:            err,
+				ErrCode:        apperrors.FailedToAssignStocksToUser,
+				HttpStatusCode: http.StatusInternalServerError,
+			}
+		}
+
+		return db.FormatResp{}
+	})
+
+	if txResp.Err != nil {
 		c.AbortWithError(
-			http.StatusInternalServerError,
+			txResp.HttpStatusCode,
 			apperrors.NewErr(
-				apperrors.FailedToAssignStocksToUser,
+				txResp.ErrCode,
+				err.Error(),
 			),
 		)
 
 		return
+
 	}
 
 	c.JSON(http.StatusOK, struct{}{})

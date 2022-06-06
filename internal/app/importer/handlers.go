@@ -206,15 +206,7 @@ func UploadProcurement(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, struct {
-		UploadedFilename string
-		ImportStatus     string
-		CreatedAt        time.Time
-	}{
-		uoInfo.Filename,
-		string(procRec.Status),
-		procRec.CreatedAt,
-	})
+	c.JSON(http.StatusOK, TrfProcurement(&procRec))
 }
 
 func GetProcurements(c *gin.Context, depCon container.Container) {

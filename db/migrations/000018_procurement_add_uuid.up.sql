@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE procurements
+ADD COLUMN uuid VARCHAR(40) UNIQUE NOT NULL DEFAULT uuid_generate_v1();
+
+COMMIT;

@@ -31,24 +31,32 @@ func TtfPurchaseRecords(ms []models.PurchaseRecord) []TrfPurchaseRecord {
 
 type TrfmedProcurement struct {
 	Filename     string    `json:"filename"`
+	UUID         string    `json:"uuid"`
 	Status       string    `json:"status"`
 	FailedReason *string   `json:"failed_reason"`
 	CreatedAt    time.Time `json:"created_at"`
+}
+
+func TrfProcurement(p *models.Procurement) TrfmedProcurement {
+	trfmp := TrfmedProcurement{
+		Filename:  p.Filename,
+		UUID:      p.Uuid,
+		Status:    string(p.Status),
+		CreatedAt: p.CreatedAt,
+	}
+
+	if p.FailedReason.Valid {
+		trfmp.FailedReason = &p.FailedReason.String
+	}
+
+	return trfmp
 }
 
 func TrfProcurements(ps []*models.Procurement) []TrfmedProcurement {
 	trfedps := make([]TrfmedProcurement, 0)
 
 	for _, p := range ps {
-		trfmp := TrfmedProcurement{
-			Filename:  p.Filename,
-			Status:    string(p.Status),
-			CreatedAt: p.CreatedAt,
-		}
-
-		if p.FailedReason.Valid {
-			trfmp.FailedReason = &p.FailedReason.String
-		}
+		trfmp := TrfProcurement(p)
 
 		trfedps = append(trfedps, trfmp)
 	}

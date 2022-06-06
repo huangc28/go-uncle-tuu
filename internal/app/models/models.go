@@ -89,6 +89,7 @@ type Inventory struct {
 	ReservedForUser sql.NullInt32   `json:"reserved_for_user"`
 	Delivered       DeliveredStatus `json:"delivered"`
 	TempReceipt     sql.NullString  `json:"temp_receipt"`
+	AssignmentID    sql.NullInt32   `json:"assignment_id"`
 }
 
 type Procurement struct {
@@ -99,6 +100,7 @@ type Procurement struct {
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    sql.NullTime   `json:"updated_at"`
 	DeletedAt    sql.NullTime   `json:"deleted_at"`
+	Uuid         string         `json:"uuid"`
 }
 
 type ProductInfo struct {
@@ -108,6 +110,14 @@ type ProductInfo struct {
 	ProdDesc     sql.NullString `json:"prod_desc"`
 	Price        sql.NullString `json:"price"`
 	GameBundleID string         `json:"game_bundle_id"`
+}
+
+type StockAssignment struct {
+	ID        int64        `json:"id"`
+	Uuid      string       `json:"uuid"`
+	CreatedAt time.Time    `json:"created_at"`
+	UpdatedAt sql.NullTime `json:"updated_at"`
+	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
 type User struct {

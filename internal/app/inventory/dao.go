@@ -34,6 +34,10 @@ func InventoryDaoServiceProvider(c cintrnal.Container) func() error {
 	}
 }
 
+func (dao *InventoryDAO) SetConn(tx db.Conn) {
+	dao.conn = tx
+}
+
 func (dao *InventoryDAO) GetUserReservedStockByUUID(prodID string, userID int) (*models.ReservedStockInfo, error) {
 	query := `
 SELECT
@@ -312,12 +316,13 @@ ORDER BY transaction_time ASC;
 	return prods, nil
 }
 
-func (dao *InventoryDAO) AssignStockToUser(assigneeID int, prodUUIDs []string) error {
+func (dao *InventoryDAO) AssignStockToUser(assigneeID, assignmentID int, prodUUIDs []string) error {
 	query, args, err := sqlx.In(`
 UPDATE inventory
-SET reserved_for_user=?
+SET reserved_for_user=?,
+SET assignment_id=?
 WHERE uuid IN(?)
-`, assigneeID, prodUUIDs)
+`, assigneeID, assignmentID, prodUUIDs)
 
 	if err != nil {
 		return err

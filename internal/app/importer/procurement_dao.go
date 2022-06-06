@@ -81,11 +81,13 @@ func (dao *ProcurementDAO) GetProcurements() ([]*models.Procurement, error) {
 	query := `
 SELECT
 	filename,
+	uuid,
 	status,
 	failed_reason,
 	created_at
 FROM
 	procurements
+ORDER BY created_at DESC;
 `
 
 	rows, err := dao.conn.Queryx(query)
