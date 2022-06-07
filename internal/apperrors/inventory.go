@@ -7,6 +7,7 @@ const (
 	NotEnoughStocks                      = "4000004"
 	FailedToAssignStocksToUser           = "4000005"
 	FailedToCreateStockAssignment        = "4000006"
+	FailedToGetAssignmentExportStatus    = "4000007	"
 )
 
 var inventoryErrMap = map[string]string{

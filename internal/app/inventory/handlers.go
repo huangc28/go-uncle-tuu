@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"huangc28/go-ios-iap-vendor/db"
 	"huangc28/go-ios-iap-vendor/internal/app/contracts"
+	"huangc28/go-ios-iap-vendor/internal/app/models"
 	"huangc28/go-ios-iap-vendor/internal/apperrors"
 	"huangc28/go-ios-iap-vendor/internal/pkg/requestbinder"
 	"net/http"
@@ -288,7 +289,7 @@ func assignStocks(c *gin.Context, depCon container.Container) {
 
 		// Create stock assignment
 		stockAssignmentDAO := NewStockAssignmentDAO(tx)
-		sa, err := stockAssignmentDAO.CreateAssignment()
+		sa, err := stockAssignmentDAO.CreateAssignment(int(assignee.ID))
 
 		if err != nil {
 			return db.FormatResp{
@@ -331,4 +332,25 @@ func assignStocks(c *gin.Context, depCon container.Container) {
 	}
 
 	c.JSON(http.StatusOK, struct{}{})
+}
+
+func assignmentExportStatus(c *gin.Context, depCon container.Container) {
+	saDAO := NewStockAssignmentDAO(db.GetDB())
+	as, err := saDAO.GetAssignmentStatus()
+
+	if err != nil {
+		c.AbortWithError(
+			http.StatusInternalServerError,
+			apperrors.NewErr(
+				apperrors.FailedToGetAssignmentExportStatus,
+				err.Error(),
+			),
+		)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, struct {
+		StockAssignmentStatus []*models.StockAssigmentStatus `json:"stock_assignments"`
+	}{as})
 }

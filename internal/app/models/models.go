@@ -113,11 +113,12 @@ type ProductInfo struct {
 }
 
 type StockAssignment struct {
-	ID        int64        `json:"id"`
-	Uuid      string       `json:"uuid"`
-	CreatedAt time.Time    `json:"created_at"`
-	UpdatedAt sql.NullTime `json:"updated_at"`
-	DeletedAt sql.NullTime `json:"deleted_at"`
+	ID         int64         `json:"id"`
+	Uuid       string        `json:"uuid"`
+	CreatedAt  time.Time     `json:"created_at"`
+	UpdatedAt  sql.NullTime  `json:"updated_at"`
+	DeletedAt  sql.NullTime  `json:"deleted_at"`
+	AssigneeID sql.NullInt32 `json:"assignee_id"`
 }
 
 type User struct {

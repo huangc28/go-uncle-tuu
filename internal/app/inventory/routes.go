@@ -46,4 +46,9 @@ func Routes(r *gin.RouterGroup, depCon container.Container) {
 	g.POST("/assign-stocks", func(c *gin.Context) {
 		assignStocks(c, depCon)
 	})
+
+	// export-status retrieve export status of a stock that belongs to an stock assignment.
+	g.GET("/assignment-export-status", func(c *gin.Context) {
+		assignmentExportStatus(c, depCon)
+	})
 }
