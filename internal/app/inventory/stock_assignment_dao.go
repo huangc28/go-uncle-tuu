@@ -22,16 +22,16 @@ func (dao *StockAssignmentDAO) SetConn(conn db.Conn) {
 func (dao *StockAssignmentDAO) CreateAssignment(assigneeID int) (*models.StockAssignment, error) {
 	query := `
 INSERT INTO stock_assignments (assignee_id)
-VALUES (null);
+VALUES ($1)
 RETURNING *;
 	`
-	var sa *models.StockAssignment
+	var sa models.StockAssignment
 
-	if err := dao.conn.QueryRowx(query, assigneeID).StructScan(sa); err != nil {
+	if err := dao.conn.QueryRowx(query, assigneeID).StructScan(&sa); err != nil {
 		return nil, err
 	}
 
-	return sa, nil
+	return &sa, nil
 }
 
 func (dao *StockAssignmentDAO) GetAssignmentStatus() ([]*models.StockAssigmentStatus, error) {

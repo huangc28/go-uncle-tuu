@@ -14,7 +14,7 @@ require (
 require (
 	cloud.google.com/go v0.101.1 // indirect
 	cloud.google.com/go/storage v1.22.1
-	github.com/gin-contrib/cors v1.3.1 // indirect
+	github.com/gin-contrib/cors v1.3.1
 	github.com/golobby/container v1.3.0
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.4.0 // indirect

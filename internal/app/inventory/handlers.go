@@ -12,7 +12,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golobby/container/pkg/container"
-	"github.com/jmoiron/sqlx"
 )
 
 type GetReservedStockBody struct {
@@ -218,7 +217,6 @@ type StockParam struct {
 // - Check if quantity is enough for each product
 //
 // Check the length the available inventory is greater than the number of requested products.
-// TODO: add assignment_inventory table pivot table to trace the deliver status between assignmnts and stocks.
 func assignStocks(c *gin.Context, depCon container.Container) {
 	var stockParams AssignStocksParams
 
@@ -285,50 +283,39 @@ func assignStocks(c *gin.Context, depCon container.Container) {
 		return
 	}
 
-	txResp := db.TransactWithFormatStruct(db.GetDB(), func(tx *sqlx.Tx) db.FormatResp {
+	// Create stock assignment
+	stockAssignmentDAO := NewStockAssignmentDAO(db.GetDB())
+	sa, err := stockAssignmentDAO.CreateAssignment(int(assignee.ID))
 
-		// Create stock assignment
-		stockAssignmentDAO := NewStockAssignmentDAO(tx)
-		sa, err := stockAssignmentDAO.CreateAssignment(int(assignee.ID))
-
-		if err != nil {
-			return db.FormatResp{
-				HttpStatusCode: http.StatusInternalServerError,
-				Err:            err,
-				ErrCode:        apperrors.FailedToCreateStockAssignment,
-			}
-		}
-
-		invDAO.SetConn(tx)
-
-		// Start assigning stock to user.
-		avaiStockUUIDs := make([]string, len(avaiStocks))
-		for _, avaiStock := range avaiStocks {
-			avaiStockUUIDs = append(avaiStockUUIDs, avaiStock.UUID)
-		}
-
-		if err := invDAO.AssignStockToUser(int(assignee.ID), int(sa.ID), avaiStockUUIDs); err != nil {
-			return db.FormatResp{
-				Err:            err,
-				ErrCode:        apperrors.FailedToAssignStocksToUser,
-				HttpStatusCode: http.StatusInternalServerError,
-			}
-		}
-
-		return db.FormatResp{}
-	})
-
-	if txResp.Err != nil {
+	if err != nil {
 		c.AbortWithError(
-			txResp.HttpStatusCode,
+			http.StatusInternalServerError,
 			apperrors.NewErr(
-				txResp.ErrCode,
+				apperrors.FailedToCreateStockAssignment,
 				err.Error(),
 			),
 		)
 
 		return
+	}
 
+	// Start assigning stock to user.
+	avaiStockUUIDs := make([]string, len(avaiStocks))
+	for _, avaiStock := range avaiStocks {
+		avaiStockUUIDs = append(avaiStockUUIDs, avaiStock.UUID)
+	}
+
+	if err := invDAO.AssignStockToUser(int(assignee.ID), int(sa.ID), avaiStockUUIDs); err != nil {
+
+		c.AbortWithError(
+			http.StatusInternalServerError,
+			apperrors.NewErr(
+				apperrors.FailedToAssignStocksToUser,
+				err.Error(),
+			),
+		)
+
+		return
 	}
 
 	c.JSON(http.StatusOK, struct{}{})

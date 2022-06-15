@@ -317,10 +317,13 @@ ORDER BY transaction_time ASC;
 }
 
 func (dao *InventoryDAO) AssignStockToUser(assigneeID, assignmentID int, prodUUIDs []string) error {
+	log.Printf("DEBUG 1 %v %v %v", assigneeID, assignmentID, prodUUIDs)
+
 	query, args, err := sqlx.In(`
 UPDATE inventory
-SET reserved_for_user=?,
-SET assignment_id=?
+SET 
+	reserved_for_user=?,
+	assignment_id=?
 WHERE uuid IN(?)
 `, assigneeID, assignmentID, prodUUIDs)
 
@@ -329,6 +332,8 @@ WHERE uuid IN(?)
 	}
 
 	query = db.GetDB().Rebind(query)
+
+	log.Printf("DEBUG 2 query %v %v %v", query, args, len(args))
 
 	if _, err := db.GetDB().Exec(query, args...); err != nil {
 		return err
