@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"huangc28/go-ios-iap-vendor/config"
 	"huangc28/go-ios-iap-vendor/db"
 	"huangc28/go-ios-iap-vendor/internal/app/contracts"
 	"huangc28/go-ios-iap-vendor/internal/app/deps"
 	"huangc28/go-ios-iap-vendor/internal/app/models"
+	"huangc28/go-ios-iap-vendor/internal/apperrors"
 	"io"
 	"os"
 	"os/signal"
@@ -26,21 +28,11 @@ import (
 	"google.golang.org/api/option"
 )
 
-const (
-	TitleSigatureNotFound                 = "9900001"
-	GameItemInfoHasNotBeenCollected       = "9900002"
-	FailedToParseTransactionTime          = "9900003"
-	FailedToGetSheet                      = "9900004"
-	FailedToInitGCSReader                 = "9900005"
-	FailedToImportDueToDuplicateInventory = "9900006"
-	FailedToImportInventory               = "9900007"
-)
-
 type ImportWorkerError struct {
-	Code            string
-	ProblematicFile string
-	ProblematicItem string
-	Message         string
+	ErrCode         string `json:"err_code"`
+	ProblematicFile string `json:"problematic_file"`
+	ProblematicItem string `json:"problematic_item"`
+	Message         string `json:"err"`
 }
 
 func (e *ImportWorkerError) Error() string {
@@ -95,7 +87,6 @@ FROM
 //     but record the failed reason in DB for the corresponding file.
 //   - What if parseAndImportProcurementToDB failed? Jot down the filename and the failed reason. continue
 //     parsing the next file.
-
 func init() {
 	config.InitConfig()
 	db.InitDB()
@@ -194,7 +185,7 @@ func StartImporting(ctx context.Context) {
 
 		if err != nil {
 			ime := &ImportWorkerError{
-				Code:            FailedToInitGCSReader,
+				ErrCode:         apperrors.FailedToInitGCSReader,
 				ProblematicFile: proc.Filename,
 			}
 
@@ -238,13 +229,20 @@ func UpdateFailedProcurementStatus(failedProcs []*ImportWorkerError) error {
 	procUpdates := make([]string, 0)
 
 	for _, failedProc := range failedProcs {
+		failedProcByte, err := json.Marshal(&failedProc)
+
+		if err != nil {
+			log.Errorf("failed to marshal importer failed struct to string %s", err.Error())
+			continue
+		}
+
 		procUpdates = append(
 			procUpdates,
 			fmt.Sprintf(
 				"('%s', '%s'::import_status, '%s')",
 				failedProc.ProblematicFile,
 				models.ImportStatusFailed,
-				failedProc.Code,
+				string(failedProcByte),
 			),
 		)
 
@@ -261,7 +259,7 @@ FROM (
 	values
 	%s
 ) AS c(filename_v, status_v, failed_reason_v)
-where t.filename = c.filename_v;
+WHERE t.filename = c.filename_v;
 `, statement)
 
 	if _, err := db.GetDB().Exec(query); err != nil {
@@ -348,7 +346,7 @@ func parseAndImportProcurementToDB(procReader io.Reader) error {
 	if err != nil {
 		return &ImportWorkerError{
 			Message: fmt.Sprintf("failed to get sheet: %s, error: %s", "Sheet1", err.Error()),
-			Code:    FailedToGetSheet,
+			ErrCode: apperrors.FailedToGetSheet,
 		}
 	}
 
@@ -358,8 +356,8 @@ func parseAndImportProcurementToDB(procReader io.Reader) error {
 	for title, pos := range titleIndexMap {
 		if pos == -1 {
 			return &ImportWorkerError{
-				Message: fmt.Sprintf("failed to find title %s at the first row", title),
-				Code:    TitleSigatureNotFound,
+				Message: fmt.Sprintf("採購單的標題有錯喔，再檢查一次 %s ", title),
+				ErrCode: apperrors.TitleSigatureNotFound,
 			}
 		}
 	}
@@ -391,13 +389,13 @@ VALUES (:prod_id, :transaction_id, :receipt, :temp_receipt, :transaction_time)
 		pqErr := err.(*pq.Error)
 		if pqErr.Code == "23505" {
 			return &ImportWorkerError{
-				Code:    FailedToImportDueToDuplicateInventory,
-				Message: fmt.Sprintf("failed to import due to duplicated stock"),
+				ErrCode: apperrors.FailedToImportDueToDuplicateInventory,
+				Message: fmt.Sprint("failed to import due to duplicated stock"),
 			}
 		}
 
 		return &ImportWorkerError{
-			Code: FailedToImportInventory,
+			ErrCode: apperrors.FailedToImportInventory,
 		}
 	}
 
@@ -419,7 +417,7 @@ func collectDataFromDataRows(dataRows [][]string, titleIndexMap map[string]int) 
 
 		if !exists {
 			return nil, &ImportWorkerError{
-				Code:            GameItemInfoHasNotBeenCollected,
+				ErrCode:         apperrors.GameItemInfoHasNotBeenCollected,
 				ProblematicItem: gameItemName,
 				Message:         fmt.Sprintf("item %s not exist in DB. You might forget to collect the in game item info?", gameItemUUID),
 			}
@@ -429,7 +427,7 @@ func collectDataFromDataRows(dataRows [][]string, titleIndexMap map[string]int) 
 
 		if err != nil {
 			return nil, &ImportWorkerError{
-				Code:            FailedToParseTransactionTime,
+				ErrCode:         apperrors.FailedToParseTransactionTime,
 				ProblematicItem: gameItemName,
 				Message:         fmt.Sprintf("item %s, failed to parse transaction time %v", gameItemName, err),
 			}
