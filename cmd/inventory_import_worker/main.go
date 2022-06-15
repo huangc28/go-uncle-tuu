@@ -187,6 +187,7 @@ func StartImporting(ctx context.Context) {
 			ime := &ImportWorkerError{
 				ErrCode:         apperrors.FailedToInitGCSReader,
 				ProblematicFile: proc.Filename,
+				Message:         fmt.Sprintf("failed to init GSC reader, 請聯絡 bryan  %s", err.Error()),
 			}
 
 			failedProcs = append(failedProcs, ime)
@@ -345,7 +346,7 @@ func parseAndImportProcurementToDB(procReader io.Reader) error {
 
 	if err != nil {
 		return &ImportWorkerError{
-			Message: fmt.Sprintf("failed to get sheet: %s, error: %s", "Sheet1", err.Error()),
+			Message: fmt.Sprintf("採購單有找到，但是沒有找到表單 %s, %s", "Sheet1", err.Error()),
 			ErrCode: apperrors.FailedToGetSheet,
 		}
 	}
@@ -390,12 +391,13 @@ VALUES (:prod_id, :transaction_id, :receipt, :temp_receipt, :transaction_time)
 		if pqErr.Code == "23505" {
 			return &ImportWorkerError{
 				ErrCode: apperrors.FailedToImportDueToDuplicateInventory,
-				Message: fmt.Sprint("failed to import due to duplicated stock"),
+				Message: fmt.Sprint("庫存有重複單號。你的採購單某些商品庫存有了"),
 			}
 		}
 
 		return &ImportWorkerError{
 			ErrCode: apperrors.FailedToImportInventory,
+			Message: err.Error(),
 		}
 	}
 
@@ -419,7 +421,10 @@ func collectDataFromDataRows(dataRows [][]string, titleIndexMap map[string]int) 
 			return nil, &ImportWorkerError{
 				ErrCode:         apperrors.GameItemInfoHasNotBeenCollected,
 				ProblematicItem: gameItemName,
-				Message:         fmt.Sprintf("item %s not exist in DB. You might forget to collect the in game item info?", gameItemUUID),
+				Message: fmt.Sprintf(
+					"採購單上有些商品還沒有採集: %s。請確定採購單上的商品都採集後再上傳一次",
+					gameItemUUID,
+				),
 			}
 		}
 
@@ -429,7 +434,7 @@ func collectDataFromDataRows(dataRows [][]string, titleIndexMap map[string]int) 
 			return nil, &ImportWorkerError{
 				ErrCode:         apperrors.FailedToParseTransactionTime,
 				ProblematicItem: gameItemName,
-				Message:         fmt.Sprintf("item %s, failed to parse transaction time %v", gameItemName, err),
+				Message:         fmt.Sprintf("商品 %s, 憑證生成時間有錯 %v", transactionID, err),
 			}
 		}
 
