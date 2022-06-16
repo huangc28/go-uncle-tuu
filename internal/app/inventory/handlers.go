@@ -106,7 +106,7 @@ func GetAvailableStock(c *gin.Context, depCon container.Container) {
 	var userDAO contracts.UserDAOer
 	depCon.Make(&userDAO)
 
-	user, err := userDAO.GetUserByUUID(c.GetString("user_uuid"), "id")
+	user, err := userDAO.GetUserByUUID(c.GetString("user_uuid"), "id", "can_be_exported")
 
 	if err != nil {
 		c.AbortWithError(
@@ -115,6 +115,15 @@ func GetAvailableStock(c *gin.Context, depCon container.Container) {
 				apperrors.FailedToGetUserByUUID,
 				err.Error(),
 			),
+		)
+
+		return
+	}
+
+	if !user.CanBeExported.Bool {
+		c.AbortWithError(
+			http.StatusBadRequest,
+			apperrors.NewErr(apperrors.UserCanNotExportStock),
 		)
 
 		return

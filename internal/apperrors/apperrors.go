@@ -39,6 +39,7 @@ func NewErr(errCode string, args ...interface{}) *Error {
 func GetErrorMessage(code string) string {
 	if len(MasterErrorMessageMap) == 0 {
 		MasterErrorMessageMap = mergeMaps(
+			userErrMap,
 			appErrMap,
 			authErrMap,
 			inventoryErrMap,
