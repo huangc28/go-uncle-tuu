@@ -305,7 +305,6 @@ const (
 	TempReceipt             = "临时客户端凭证"
 	Receipt                 = "客户端凭证"
 	ReceiptCreatedAt        = "凭证生成时间"
-	GameItemID              = "档位ID"
 	GameItemUUID            = "档位代码"
 )
 
@@ -318,7 +317,6 @@ var TitleSignature = map[string]bool{
 	TempReceipt:      true,
 	Receipt:          true,
 	ReceiptCreatedAt: true,
-	GameItemID:       true,
 	GameItemUUID:     true,
 }
 
@@ -476,7 +474,6 @@ func getTitlePositionAtTitleRow(row []string) map[string]int {
 		TempReceipt:      -1,
 		Receipt:          -1,
 		ReceiptCreatedAt: -1,
-		GameItemID:       -1,
 		GameItemUUID:     -1,
 	}
 
