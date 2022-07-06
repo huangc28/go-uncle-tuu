@@ -8,4 +8,5 @@ const (
 	FailedToInitGCSReader                 = "9900005"
 	FailedToImportDueToDuplicateInventory = "9900006"
 	FailedToImportInventory               = "9900007"
+	IOSGameItemUUIDNotProvided            = "9900008"
 )

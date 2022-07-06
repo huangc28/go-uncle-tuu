@@ -362,7 +362,7 @@ func parseAndImportProcurementToDB(procReader io.Reader) error {
 	}
 
 	dataRows := rows[1:]
-	invs, err := collectDataFromDataRows(dataRows, titleIndexMap)
+	invs, err := extractDataFromDataRows(dataRows, titleIndexMap)
 
 	if err != nil {
 		return err
@@ -373,6 +373,14 @@ func parseAndImportProcurementToDB(procReader io.Reader) error {
 	}
 
 	return nil
+}
+
+func expandDataRowLengthToAlignTitleRow(dataRows [][]string) {
+	// We can not use range, since range only copy it's value
+	// instead of changing the property of underlying slice.
+	for i := 0; i < len(dataRows); i++ {
+		dataRows[i] = dataRows[i][:cap(dataRows[i])]
+	}
 }
 
 func importInventoriesToDB(invs []*models.Inventory) error {
@@ -402,15 +410,28 @@ VALUES (:prod_id, :transaction_id, :receipt, :temp_receipt, :transaction_time)
 	return nil
 }
 
-func collectDataFromDataRows(dataRows [][]string, titleIndexMap map[string]int) ([]*models.Inventory, error) {
+func extractDataFromDataRows(dataRows [][]string, titleIndexMap map[string]int) ([]*models.Inventory, error) {
+	expandDataRowLengthToAlignTitleRow(dataRows)
 	invs := make([]*models.Inventory, 0)
 	for _, dataRow := range dataRows {
+		gameName := dataRow[titleIndexMap[GameName]]
 		gameItemName := dataRow[titleIndexMap[GameItemName]]
 		gameItemUUID := dataRow[titleIndexMap[GameItemUUID]]
 		transactionID := dataRow[titleIndexMap[TransactionID]]
 		transactionTime := dataRow[titleIndexMap[ReceiptCreatedAt]]
 		tempReceipt := dataRow[titleIndexMap[TempReceipt]]
 		receipt := dataRow[titleIndexMap[Receipt]]
+
+		// If gameItemUUID is not provided, we need to notify business buy to provide it in excel
+		if len(gameItemUUID) == 0 {
+			return nil, &ImportWorkerError{
+				ErrCode:         apperrors.IOSGameItemUUIDNotProvided,
+				ProblematicItem: gameItemName,
+				Message:         fmt.Sprintf("採購單有商品沒有提供 \"档位代码\", 請再檢查一次 %s %s", gameName, gameItemName),
+			}
+
+		}
+		log.Printf("DEUBG 1 %v", gameItemUUID)
 
 		// Retrieve item ID in our database via prodUUIDAndIDMap. If item not found, that means given item info has not been collected.
 		gameItemIDInDB, exists := prodUUIDAndIDMap[gameItemUUID]
@@ -420,8 +441,9 @@ func collectDataFromDataRows(dataRows [][]string, titleIndexMap map[string]int) 
 				ErrCode:         apperrors.GameItemInfoHasNotBeenCollected,
 				ProblematicItem: gameItemName,
 				Message: fmt.Sprintf(
-					"採購單上有些商品還沒有採集: %s。請確定採購單上的商品都採集後再上傳一次",
-					gameItemUUID,
+					"採購單上有些商品還沒有採集: %s %s。請確定採購單上的商品都採集後再上傳一次",
+					gameItemName,
+					gameName,
 				),
 			}
 		}
