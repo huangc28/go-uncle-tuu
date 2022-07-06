@@ -86,7 +86,6 @@ func (s *InventoryImportWorkerTestSuite) TestExtractDataFromRowsSuccess() {
 	prodUUIDAndIDMap["com.ncsoft.lineage2mtw_a5"] = 71
 	data, err = extractDataFromDataRows(dataRows, titleIndexMap)
 	if err != nil {
-
 		assert.Equal("採購單有商品沒有提供 \"档位代码\", 請再檢查一次 天堂M 4000 鑽石", err.Error())
 	}
 	log.Printf("DEBUG %v", data)

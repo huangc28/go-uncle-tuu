@@ -431,8 +431,6 @@ func extractDataFromDataRows(dataRows [][]string, titleIndexMap map[string]int) 
 			}
 
 		}
-		log.Printf("DEUBG 1 %v", gameItemUUID)
-
 		// Retrieve item ID in our database via prodUUIDAndIDMap. If item not found, that means given item info has not been collected.
 		gameItemIDInDB, exists := prodUUIDAndIDMap[gameItemUUID]
 
